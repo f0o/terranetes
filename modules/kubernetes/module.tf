@@ -84,10 +84,34 @@ WantedBy=multi-user.target
 UNIT
 }
 
+data "ignition_systemd_unit" "set-environment" {
+  name    = "set-environment.service"
+  enabled = true
+
+  content = <<UNIT
+[Unit]
+Requires=network-online.target
+After=network-online.target
+ConditionFirstBoot=True
+[Service]
+EnvironmentFile=/etc/environment
+RemainAfterExit=True
+ExecStartPre=/bin/sh -c "echo HOSTNAME_BIOS=$(hostname) | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo HOST_IP=$(ip a | grep en | tail -n 1 | cut -d / -f 1 | rev |  cut -d \  -f 1 | rev) | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.version} | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=${local.k8s.version} | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=docker://gcr.io/google-containers/hyperkube | tee -a /etc/environment"
+ExecStart=/bin/echo started
+[Install]
+WantedBy=multi-user.target
+UNIT
+}
+
 data "ignition_config" "ignition" {
   files = "${compact(concat(module.cni.manifests, module.sc.manifests))}"
   systemd = [
+    "${data.ignition_systemd_unit.set-environment.id}",
     "${data.ignition_systemd_unit.installer.id}",
-    "${data.ignition_systemd_unit.kubelet.id}"
+    "${data.ignition_systemd_unit.kubelet.id}",
   ]
 }
