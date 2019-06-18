@@ -100,7 +100,7 @@ ExecStartPre=/bin/sh -c "echo HOSTNAME_BIOS=$(hostname) | tee -a /etc/environmen
 ExecStartPre=/bin/sh -c "echo HOST_IP=$(ip a | grep en | tail -n 1 | cut -d / -f 1 | rev |  cut -d \  -f 1 | rev) | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.version} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=${local.k8s.version} | tee -a /etc/environment"
-ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=docker://gcr.io/google-containers/hyperkube | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=${local.k8s.image} | tee -a /etc/environment"
 ExecStart=/bin/echo started
 [Install]
 WantedBy=multi-user.target

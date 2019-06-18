@@ -20,6 +20,7 @@ variable "k8s" {
   description = "Kubernetes Object"
   type = object({
     version = string,
+    image   = string,
     cni = object({
       type    = string,
       version = string,
@@ -37,6 +38,7 @@ locals {
   k8s = {
     version       = "v${var.k8s.version}"
     version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
+    image         = "${var.k8s.image != "" ? var.k8s.image : "docker://gcr.io/google-containers/hyperkube"}"
     cni           = "${var.k8s.cni}"
     storages      = "${var.k8s.storages}"
   }
