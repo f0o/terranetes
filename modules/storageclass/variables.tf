@@ -16,15 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-variable "sc" {
-  description = "List of StorageClass Objects"
-  type        = list(object({ name = string, type = string, params = map(string) }))
-}
-
 variable "k8s" {
   description = "Kubernetes Object - See Kubernetes Module for Documentation"
 }
-
 
 locals {
   kubelet_installer = ""

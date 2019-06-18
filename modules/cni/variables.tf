@@ -16,31 +16,29 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-variable "cni" {
-  description = "CNI Object containing `type` and `version`"
-  type        = object({ type = string, version = string, extra = bool })
-}
-
 variable "k8s" {
   description = "Kubernetes Object - See Kubernetes Module for Documentation"
 }
 
 locals {
   kubelet_installer = ""
-  kubelet_svc       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
-  kubelet_rkt       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"
+  kubelet_svc       = "${var.k8s.cni.type == "canal" || var.k8s.cni.type == "calico" || var.k8s.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
+  kubelet_rkt       = "${var.k8s.cni.type == "canal" || var.k8s.cni.type == "calico" || var.k8s.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"
   cni_types = {
     canal = {
       version = "3.7"
       url     = "https://docs.projectcalico.org/v%s/manifests/canal.yaml"
+      extra   = ""
     }
     calico = {
       version = "3.7"
       url     = "https://docs.projectcalico.org/v%s/manifests/calico.yaml"
+      extra   = ""
     }
     calico-typha = {
       version = "3.7"
       url     = "https://docs.projectcalico.org/v%s/manifests/calico-typha.yaml"
+      extra   = ""
     }
     weavenet = {
       version = "${var.k8s.version_short}"

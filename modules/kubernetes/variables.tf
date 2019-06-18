@@ -16,22 +16,28 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-variable "cni" {
-  description = "CNI Object - See CNI Module Documentation"
-}
-
-variable "sc" {
-  description = "List of StorageClass Objects - See StorageClass Module Documentation"
-}
-
 variable "k8s" {
   description = "Kubernetes Object"
-  type        = object({ version = string })
+  type = object({
+    version = string,
+    cni = object({
+      type    = string,
+      version = string,
+      extra   = bool
+    }),
+    storages = list(object({
+      name   = string,
+      type   = string,
+      params = map(string)
+    }))
+  })
 }
 
 locals {
   k8s = {
     version       = "v${var.k8s.version}"
     version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
+    cni           = "${var.k8s.cni}"
+    storages      = "${var.k8s.storages}"
   }
 }

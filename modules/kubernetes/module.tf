@@ -18,13 +18,11 @@
 
 module "cni" {
   source = "../cni"
-  cni    = "${var.cni}"
   k8s    = "${local.k8s}"
 }
 
 module "sc" {
   source = "../storageclass"
-  sc     = "${var.sc}"
   k8s    = "${local.k8s}"
 }
 
