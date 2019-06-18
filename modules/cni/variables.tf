@@ -18,6 +18,7 @@
 
 variable "cni" {
   description = "CNI Object containing `type` and `version`"
+  type        = object({ type = string, version = string })
 }
 
 variable "cni_types" {

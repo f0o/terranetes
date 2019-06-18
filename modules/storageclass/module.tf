@@ -17,12 +17,12 @@
 */
 
 data "ignition_file" "sc" {
-  count     = "${length(var.sc)}"
+  count      = "${length(var.sc)}"
   filesystem = "root"
   path       = "/opt/post-deploy/02-sc-${lookup(var.sc[count.index], "type")}-${count.index}.yaml"
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/${lookup(var.sc[count.index], "type")}.tmpl",var.sc[count.index])}"
+    content = "${templatefile("${path.module}/${lookup(var.sc[count.index], "type")}.tmpl", var.sc[count.index])}"
   }
 }

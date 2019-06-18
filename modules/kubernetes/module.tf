@@ -22,10 +22,10 @@ module "cni" {
 }
 
 module "sc" {
-  source  = "../storageclass"
-  sc      = "${var.sc}" 
+  source = "../storageclass"
+  sc     = "${var.sc}"
 }
 
 data "ignition_config" "ignition" {
-  files = "${compact(concat([ module.cni.manifest ], module.sc.manifest))}"
+  files = "${compact(concat([module.cni.manifest], module.sc.manifest))}"
 }

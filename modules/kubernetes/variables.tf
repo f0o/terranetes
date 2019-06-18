@@ -17,34 +17,9 @@
 */
 
 variable "cni" {
-  description = "CNI Object containing `type` and `version`"
-  default = {
-    type    = "canal"
-    version = "latest"
-  }
+  description = "CNI Object - See CNI Module Documentation"
 }
 
 variable "sc" {
-  description = "List of StorageClass Objects"
-  type = list(object({name = string, type = string, params = map(string)}))
-  default = [
-    {
-      name = "ebs-io1"
-      type = "ebs"
-      params = {
-        fsType    = "ext4"
-        type      = "io1"
-        iopsPerGB = "10"
-      }
-    },
-    {
-      name = "glusterfs"
-      type = "glusterfs"
-      params = {
-        resturl = "localhost"
-        clusterid = "123"
-        restkey = "password"
-      }
-    },
-  ]
+  description = "List of StorageClass Objects - See StorageClass Module Documentation"
 }

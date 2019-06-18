@@ -18,6 +18,6 @@
 
 variable "sc" {
   description = "List of StorageClass Objects"
-  type = list(object({name = string, type = string, params = map(string)}))
+  type        = list(object({ name = string, type = string, params = map(string) }))
 }
 
