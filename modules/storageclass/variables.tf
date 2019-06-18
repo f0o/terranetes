@@ -21,3 +21,8 @@ variable "sc" {
   type        = list(object({ name = string, type = string, params = map(string) }))
 }
 
+locals {
+  kubelet_installer = ""
+  kubelet_svc       = ""
+  kubelet_rkt       = ""
+}

@@ -37,3 +37,9 @@ variable "cni_types" {
     }
   }
 }
+
+locals {
+  kubelet_installer = ""
+  kubelet_svc       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
+  kubelet_rkt       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"
+}

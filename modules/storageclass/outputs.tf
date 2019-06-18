@@ -20,3 +20,10 @@ output "manifest" {
   value = "${data.ignition_file.sc.*.id}"
 }
 
+output "kubelet" {
+  value = {
+    installer = "${local.kubelet_installer}"
+    service   = "${local.kubelet_svc}"
+    rkt       = "${local.kubelet_rkt}"
+  }
+}

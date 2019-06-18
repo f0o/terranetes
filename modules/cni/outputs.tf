@@ -17,6 +17,13 @@
 */
 
 output "manifest" {
-  #value = "${var.network-id != "" ? var.network-id : join("", openstack_networking_network_v2.net.*.id)}"
   value = "${data.ignition_file.cni.id}"
+}
+
+output "kubelet" {
+  value = {
+    installer = "${local.kubelet_installer}"
+    service   = "${local.kubelet_svc}"
+    rkt       = "${local.kubelet_rkt}"
+  }
 }
