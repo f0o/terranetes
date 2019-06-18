@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-output "manifest" {
+output "manifests" {
   value = "${data.ignition_file.sc.*.id}"
 }
 

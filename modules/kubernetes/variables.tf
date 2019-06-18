@@ -23,3 +23,15 @@ variable "cni" {
 variable "sc" {
   description = "List of StorageClass Objects - See StorageClass Module Documentation"
 }
+
+variable "k8s" {
+  description = "Kubernetes Object"
+  type        = object({ version = string })
+}
+
+locals {
+  k8s = {
+    version       = "v${var.k8s.version}"
+    version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
+  }
+}

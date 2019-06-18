@@ -22,6 +22,17 @@ data "ignition_file" "cni" {
   mode       = 420
 
   source {
-    source = "${format(lookup(var.cni_types, var.cni.type).url, var.cni.version != "latest" ? var.cni.version : lookup(var.cni_types, var.cni.type).version)}"
+    source = "${format(lookup(local.cni_types, var.cni.type).url, var.cni.version != "latest" ? var.cni.version : lookup(local.cni_types, var.cni.type).version)}"
+  }
+}
+
+data "ignition_file" "extra" {
+  count      = "${var.cni.extra ? 1 : 0}"
+  filesystem = "root"
+  path       = "/opt/post-deploy/01-cni-extra.yaml"
+  mode       = 420
+
+  source {
+    source = "${format(lookup(local.cni_types, var.cni.type).extra, var.cni.version != "latest" ? var.cni.version : lookup(local.cni_types, var.cni.type).version)}"
   }
 }

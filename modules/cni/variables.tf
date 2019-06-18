@@ -18,11 +18,18 @@
 
 variable "cni" {
   description = "CNI Object containing `type` and `version`"
-  type        = object({ type = string, version = string })
+  type        = object({ type = string, version = string, extra = bool })
 }
 
-variable "cni_types" {
-  default = {
+variable "k8s" {
+  description = "Kubernetes Object - See Kubernetes Module for Documentation"
+}
+
+locals {
+  kubelet_installer = ""
+  kubelet_svc       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
+  kubelet_rkt       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"
+  cni_types = {
     canal = {
       version = "3.7"
       url     = "https://docs.projectcalico.org/v%s/manifests/canal.yaml"
@@ -35,11 +42,10 @@ variable "cni_types" {
       version = "3.7"
       url     = "https://docs.projectcalico.org/v%s/manifests/calico-typha.yaml"
     }
+    weavenet = {
+      version = "${var.k8s.version_short}"
+      url     = "https://cloud.weave.works/k8s/%s/net.yaml"
+      extra   = "https://cloud.weave.works/k8s/%s/scope.yaml"
+    }
   }
-}
-
-locals {
-  kubelet_installer = ""
-  kubelet_svc       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
-  kubelet_rkt       = "${var.cni.type == "canal" || var.cni.type == "calico" || var.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"
 }

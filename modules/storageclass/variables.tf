@@ -21,6 +21,11 @@ variable "sc" {
   type        = list(object({ name = string, type = string, params = map(string) }))
 }
 
+variable "k8s" {
+  description = "Kubernetes Object - See Kubernetes Module for Documentation"
+}
+
+
 locals {
   kubelet_installer = ""
   kubelet_svc       = ""

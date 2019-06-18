@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-output "manifest" {
-  value = "${data.ignition_file.cni.id}"
+output "manifests" {
+  value = "${concat([data.ignition_file.cni.id], data.ignition_file.extra.*.id)}"
 }
 
 output "kubelet" {

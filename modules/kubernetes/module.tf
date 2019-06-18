@@ -19,11 +19,13 @@
 module "cni" {
   source = "../cni"
   cni    = "${var.cni}"
+  k8s    = "${local.k8s}"
 }
 
 module "sc" {
   source = "../storageclass"
   sc     = "${var.sc}"
+  k8s    = "${local.k8s}"
 }
 
 data "ignition_systemd_unit" "installer" {
@@ -85,7 +87,7 @@ UNIT
 }
 
 data "ignition_config" "ignition" {
-  files = "${compact(concat([module.cni.manifest], module.sc.manifest))}"
+  files = "${compact(concat(module.cni.manifests, module.sc.manifests))}"
   systemd = [
     "${data.ignition_systemd_unit.installer.id}",
     "${data.ignition_systemd_unit.kubelet.id}"
