@@ -21,6 +21,11 @@ variable "k8s" {
 }
 
 locals {
+  etcd = "${merge(var.k8s.etcd, map("image", var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image))}"
+  defaults = {
+    etcd = "${local.etcd}"
+  }
+  k8s = "${merge(var.k8s, local.defaults)}"
   /*
     Calculate modifiers to return to the Kubernetes Module to alter parts of it's deployments.
     See outputs for more qualified Documentation of these entries.

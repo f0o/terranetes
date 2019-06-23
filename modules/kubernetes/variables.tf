@@ -22,12 +22,17 @@ variable "k8s" {
     version = string,
     image   = string,
     pubkeys = list(string),
+    instance = object({
+      type  = string,
+      image = string
+    }),
     etcd = object({
-      type      = string
-      discovery = string
-      image     = string
+      type      = string,
+      discovery = string,
+      image     = string,
       instance = object({
-        type = string
+        type  = string,
+        image = string
       })
     }),
     cni = object({

@@ -17,12 +17,12 @@
 */
 
 data "ignition_file" "etcd" {
-  count      = "${var.k8s.etcd.type == "pod" ? 1 : 0}"
+  count      = "${local.k8s.etcd.type == "pod" ? 1 : 0}"
   filesystem = "root"
   path       = "/opt/templates/manifests/01-etcd.yaml"
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/etcd.tmpl", var.k8s.etcd)}"
+    content = "${templatefile("${path.module}/etcd.tmpl", local.k8s.etcd)}"
   }
 }
