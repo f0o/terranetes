@@ -20,7 +20,7 @@
   List of Manifests as `ignition_file.id` references
 */
 output "manifests" {
-  value = "${concat([data.ignition_file.cni.id], data.ignition_file.extra.*.id)}"
+  value = "${concat(list(data.ignition_file.cni.id), data.ignition_file.extra.*.id)}"
 }
 
 /*

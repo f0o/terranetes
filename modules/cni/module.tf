@@ -22,17 +22,17 @@ data "ignition_file" "cni" {
   mode       = 420
 
   source {
-    source = "${format(lookup(local.cni_types, var.k8s.cni.type).url, var.k8s.cni.version != "latest" ? var.k8s.cni.version : lookup(local.cni_types, var.k8s.cni.type).version)}"
+    source = "${format(lookup(lookup(local.cni_types, var.k8s.cni.type), "url"), local.version)}"
   }
 }
 
 data "ignition_file" "extra" {
-  count      = "${var.k8s.cni.extra && lookup(local.cni_types, var.k8s.cni.type).extra != "" ? 1 : 0}"
+  count      = "${var.k8s.cni.extra && lookup(lookup(local.cni_types, var.k8s.cni.type), "extra") != "" ? 1 : 0}"
   filesystem = "root"
   path       = "/opt/post-deploy/01-cni-extra.yaml"
   mode       = 420
 
   source {
-    source = "${format(lookup(local.cni_types, var.k8s.cni.type).extra, var.k8s.cni.version != "latest" ? var.k8s.cni.version : lookup(local.cni_types, var.k8s.cni.type).version)}"
+    source = "${format(lookup(lookup(local.cni_types, var.k8s.cni.type), "extra"), local.version)}"
   }
 }

@@ -25,6 +25,10 @@ variable "k8s" {
     etcd = object({
       type      = string
       discovery = string
+      image     = string
+      instance = object({
+        type = string
+      })
     }),
     cni = object({
       type    = string,
