@@ -16,9 +16,21 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/*
+  List of Manifests as `ignition_file.id` references
+*/
 output "manifests" {
   value = "${concat([data.ignition_file.cni.id], data.ignition_file.extra.*.id)}"
 }
+
+/*
+  The Kubelet output is a unified way of providing feedback to the Kubernetes 
+  Module to ensure certain hooks or modifications of kubelet (such as mount 
+  points or cmd arguments) are met.
+  `installer`   This denotes systemd entries to be added to the k8s installer
+  `service`     This denotes systemd entries to be added to the kubelet service
+  `rkt`         This denotes arguments passed to the kubelet rkt call
+*/
 
 output "kubelet" {
   value = {

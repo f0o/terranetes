@@ -16,27 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-/*
-  List of Manifests as `ignition_file.id` references
-*/
-
 output "manifests" {
-  value = "${data.ignition_file.sc.*.id}"
-}
-
-/*
-  The Kubelet output is a unified way of providing feedback to the Kubernetes 
-  Module to ensure certain hooks or modifications of kubelet (such as mount 
-  points or cmd arguments) are met.
-  `installer`   This denotes systemd entries to be added to the k8s installer
-  `service`     This denotes systemd entries to be added to the kubelet service
-  `rkt`         This denotes arguments passed to the kubelet rkt call
-*/
-
-output "kubelet" {
-  value = {
-    installer = "${local.kubelet_installer}"
-    service   = "${local.kubelet_svc}"
-    rkt       = "${local.kubelet_rkt}"
-  }
+  value = "${data.ignition_file.etcd.*.id}"
 }

@@ -21,6 +21,10 @@ variable "k8s" {
 }
 
 locals {
+  /*
+    Calculate modifiers to return to the Kubernetes Module to alter parts of it's deployments.
+    See outputs for more qualified Documentation of these entries.
+  */
   kubelet_installer = ""
   kubelet_svc       = "${var.k8s.cni.type == "canal" || var.k8s.cni.type == "calico" || var.k8s.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
   kubelet_rkt       = "${var.k8s.cni.type == "canal" || var.k8s.cni.type == "calico" || var.k8s.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"

@@ -16,6 +16,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+module "etcd" {
+  source = "../etcd"
+  k8s    = "${local.k8s}"
+}
+
 module "cni" {
   source = "../cni"
   k8s    = "${local.k8s}"
@@ -36,13 +41,14 @@ Requires=network-online.target set-environment.service
 After=set-environment.service
 ConditionPathExists=!/opt/kubelet.conf
 [Service]
-SyslogIdentifier=install_k8s
+SyslogIdentifier=k8s_installer
 RemainAfterExit=True
 EnvironmentFile=/etc/environment
 ExecStartPre=/usr/bin/mkdir -p /local-volumes /opt/bin /opt/cni/bin /etc/cni/net.d
 ExecStartPre=/usr/bin/ln -s /etc/cni/net.d /opt/cni/net.d
 ExecStartPre=/usr/bin/curl -f -L -f -o /opt/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$${KUBERNETES_VERSION}/bin/linux/amd64/kubectl
 ExecStartPre=/usr/bin/chmod +x /opt/bin/kubectl
+ExecStart=/bin/true
 Restart=on-failure
 RestartSec=10
 TimeoutSec=0
@@ -58,7 +64,7 @@ data "ignition_systemd_unit" "kubelet" {
   content = <<UNIT
 [Unit]
 Description=Kubernetes Controller Manager
-Requires=network-online.target
+Requires=network-online.target k8s_installer.service
 After=k8s_installer.service docker.service rkt-metadata.service containerd.service
 StartLimitIntervalSec=0
 [Service]
@@ -107,11 +113,39 @@ WantedBy=multi-user.target
 UNIT
 }
 
+data "ignition_systemd_unit" "drainer" {
+  name = "drainer.service"
+  enabled = true
+
+  content = <<UNIT
+[Unit]
+Description=Simple Service to Drain the current node and force migration of resources before shutdown
+After=kubelet.service docker.service rkt-metadata.service containerd.service
+[Service]
+SyslogIdentifier=kubelet
+EnvironmentFile=/etc/environment
+Type=oneshot
+RemainAfterExit=true
+ExecStop=/opt/bin/kubectl --kubeconfig=/opt/kubelet.conf drain $HOSTNAME --ignore-daemonsets --force --grace-period=60
+ExecStopPost=/opt/bin/kubectl --kubeconfig=/opt/kubelet.conf delete node $HOSTNAME
+TimeoutStopSec=0
+[Install]
+WantedBy=kubelet.service
+UNIT
+}
+
+data "ignition_user" "core" {
+  name                = "core"
+  ssh_authorized_keys = "${local.k8s.pubkeys}"
+}
+
 data "ignition_config" "ignition" {
-  files = "${compact(concat(module.cni.manifests, module.sc.manifests))}"
+  files = "${compact(concat(module.cni.manifests, module.sc.manifests, module.etcd.manifests))}"
+  users = ["${data.ignition_user.core.id}"]
   systemd = [
     "${data.ignition_systemd_unit.set-environment.id}",
     "${data.ignition_systemd_unit.installer.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
+    "${data.ignition_systemd_unit.drainer.id}",
   ]
 }

@@ -17,36 +17,15 @@
 */
 
 variable "k8s" {
-  description = "Kubernetes Object"
-  type = object({
-    version = string,
-    image   = string,
-    pubkeys = list(string),
-    etcd = object({
-      type      = string
-      discovery = string
-    }),
-    cni = object({
-      type    = string,
-      version = string,
-      extra   = bool
-    }),
-    storages = list(object({
-      name   = string,
-      type   = string,
-      params = map(string)
-    }))
-  })
+  description = "Kubernetes Object - See Kubernetes Module for Documentation"
 }
 
 locals {
-  k8s = {
-    version       = "v${var.k8s.version}"
-    version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
-    image         = "${var.k8s.image != "" ? var.k8s.image : "docker://gcr.io/google-containers/hyperkube"}"
-    cni           = "${var.k8s.cni}"
-    storages      = "${var.k8s.storages}"
-    pubkeys       = "${var.k8s.pubkeys}"
-    etcd          = "${var.k8s.etcd}"
-  }
+  /*
+    Calculate modifiers to return to the Kubernetes Module to alter parts of it's deployments.
+    See outputs for more qualified Documentation of these entries.
+  */
+  kubelet_installer = ""
+  kubelet_svc       = ""
+  kubelet_rkt       = ""
 }
