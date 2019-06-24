@@ -17,5 +17,9 @@
 */
 
 output "ignition" {
-  value = "${data.ignition_config.ignition.rendered}"
+  value = "${data.ignition_config.ignition.*.rendered}"
+}
+
+output "pki" {
+  value = "${local.pki}"
 }

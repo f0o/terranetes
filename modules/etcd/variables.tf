@@ -20,8 +20,14 @@ variable "k8s" {
   description = "Kubernetes Object - See Kubernetes Module for Documentation"
 }
 
+variable "pki" {
+  description = "PKI Object - See PKI Module for Documentation"
+}
+
 locals {
-  etcd = "${merge(var.k8s.etcd, map("image", var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image))}"
+  masters = [for i in var.k8s.nodes : i if contains(i.labels, "master") == true]
+  count   = "${var.k8s.etcd.type == "pod" ? length(local.masters) : length(var.k8s.etcd.nodes)}"
+  etcd    = "${merge(var.k8s.etcd, map("image", var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image))}"
   defaults = {
     etcd = "${local.etcd}"
   }

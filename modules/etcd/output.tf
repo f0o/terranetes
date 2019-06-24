@@ -17,5 +17,9 @@
 */
 
 output "manifests" {
-  value = "${data.ignition_file.etcd.*.id}"
+  value = "${data.ignition_file.etcd-pod.*.id}"
+}
+
+output "files" {
+  value = [for k, v in data.ignition_file.etcd-key.*.id : [v, data.ignition_file.etcd-cert[k].id]]
 }

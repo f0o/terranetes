@@ -22,18 +22,19 @@ variable "k8s" {
     version = string,
     image   = string,
     pubkeys = list(string),
-    instance = object({
-      type  = string,
-      image = string
-    }),
+    nodes = list(object({
+      type   = string,
+      image  = string,
+      labels = list(string)
+    })),
     etcd = object({
       type      = string,
       discovery = string,
       image     = string,
-      instance = object({
+      nodes = list(object({
         type  = string,
         image = string
-      })
+      }))
     }),
     cni = object({
       type    = string,
@@ -44,18 +45,24 @@ variable "k8s" {
       name   = string,
       type   = string,
       params = map(string)
-    }))
+    })),
+    pki = object({
+      type = string
+    })
   })
 }
 
 locals {
-  k8s = {
+  defaults = {
     version       = "v${var.k8s.version}"
     version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
     image         = "${var.k8s.image != "" ? var.k8s.image : "docker://gcr.io/google-containers/hyperkube"}"
-    cni           = "${var.k8s.cni}"
-    storages      = "${var.k8s.storages}"
-    pubkeys       = "${var.k8s.pubkeys}"
-    etcd          = "${var.k8s.etcd}"
+  }
+  pki = "${module.pki.pki}"
+  k8s = "${merge(var.k8s, local.defaults)}"
+  counts = {
+    master  = "${length([for i in var.k8s.nodes : i if contains(i.labels, "master") == true])}"
+    compute = "${length([for i in var.k8s.nodes : i if contains(i.labels, "compute") == true])}"
+    ingress = "${length([for i in var.k8s.nodes : i if contains(i.labels, "ingress") == true])}"
   }
 }

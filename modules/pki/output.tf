@@ -16,35 +16,18 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-data "ignition_file" "etcd-pod" {
-  count      = "${local.k8s.etcd.type == "pod" ? 1 : 0}"
-  filesystem = "root"
-  path       = "/opt/templates/manifests/01-etcd.yaml"
-  mode       = 420
-
-  content {
-    content = "${templatefile("${path.module}/etcd.tmpl", local.k8s.etcd)}"
-  }
-}
-
-data "ignition_file" "etcd-cert" {
-  count      = "${local.count}"
-  filesystem = "root"
-  path       = "/etc/etcd/etcd.crt"
-  mode       = 420
-
-  content {
-    content = "${var.pki.etcd.certs[count.index]}"
-  }
-}
-
-data "ignition_file" "etcd-key" {
-  count      = "${local.count}"
-  filesystem = "root"
-  path       = "/etc/etcd/etcd.key"
-  mode       = 420
-
-  content {
-    content = "${var.pki.etcd.keys[count.index]}"
+output "pki" {
+  value = {
+    ca = {
+      cert = "${tls_self_signed_cert.ca.0.cert_pem}"
+    }
+    etcd = {
+      certs = "${tls_locally_signed_cert.etcd.*.cert_pem}"
+      keys  = "${tls_private_key.etcd.*.private_key_pem}"
+    }
+    k8s = {
+      certs = "${tls_locally_signed_cert.k8s.*.cert_pem}"
+      keys  = "${tls_private_key.k8s.*.private_key_pem}"
+    }
   }
 }

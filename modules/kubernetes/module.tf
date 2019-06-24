@@ -16,9 +16,15 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+module "pki" {
+  source = "../pki"
+  k8s    = "${local.k8s}"
+}
+
 module "etcd" {
   source = "../etcd"
   k8s    = "${local.k8s}"
+  pki    = "${local.pki}"
 }
 
 module "cni" {
@@ -139,8 +145,58 @@ data "ignition_user" "core" {
   ssh_authorized_keys = "${local.k8s.pubkeys}"
 }
 
+data "ignition_file" "kubelet-cert" {
+  count      = "${local.k8s.pki.type == "local" ? length(var.k8s.nodes) : 0}"
+  filesystem = "root"
+  path       = "/etc/ssl/k8s/kubelet.crt"
+  mode       = 420
+
+  content {
+    content = "${local.pki.k8s.certs[count.index]}"
+  }
+}
+
+data "ignition_file" "kubelet-key" {
+  count      = "${local.k8s.pki.type == "local" ? length(var.k8s.nodes) : 0}"
+  filesystem = "root"
+  path       = "/etc/ssl/k8s/kubelet.key"
+  mode       = 420
+
+  content {
+    content = "${local.pki.k8s.keys[count.index]}"
+  }
+}
+
+data "ignition_file" "ca-cert" {
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  filesystem = "root"
+  path       = "/etc/ssl/k8s/ca.crt"
+  mode       = 420
+
+  content {
+    content = "${local.pki.ca.cert}"
+  }
+}
+
 data "ignition_config" "ignition" {
-  files = "${compact(concat(module.cni.manifests, module.sc.manifests, module.etcd.manifests))}"
+  count = "${length(local.k8s.nodes)}"
+  files = "${compact(concat(
+    contains(local.k8s.nodes[count.index].labels, "master") ? concat(list( //Node is Master
+      local.k8s.etcd.type == "pod" ? module.etcd.files[count.index][0] : "",
+      local.k8s.etcd.type == "pod" ? module.etcd.files[count.index][1] : "",
+      ),
+      module.sc.manifests, module.etcd.manifests
+      ) : contains(local.k8s.nodes[count.index].labels, "compute") ? list( //Node is Compute
+      ""
+      ) : list( //Node is anything else
+      ""
+    ),
+    list(
+      local.k8s.pki.type == "local" ? data.ignition_file.kubelet-cert[count.index].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.kubelet-key[count.index].id : "",
+    ),
+    data.ignition_file.ca-cert.*.id, module.cni.manifests
+  ))}"
   users = ["${data.ignition_user.core.id}"]
   systemd = [
     "${data.ignition_systemd_unit.set-environment.id}",
