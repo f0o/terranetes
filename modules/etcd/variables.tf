@@ -25,18 +25,22 @@ variable "pki" {
 }
 
 locals {
-  masters = [for i in var.k8s.nodes : i if contains(i.labels, "master") == true]
-  count   = "${var.k8s.etcd.type == "pod" ? length(local.masters) : length(var.k8s.etcd.nodes)}"
-  etcd    = "${merge(var.k8s.etcd, map("image", var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image))}"
+  count     = "${var.k8s.etcd.type == "pod" ? length([for i in var.k8s.nodes : i if contains(i.labels, "master") == true]) : length(var.k8s.etcd.nodes)}"
+  discovery = "${var.k8s.etcd.discovery == "" ? "etcd.io" : var.k8s.etcd.discovery}"
   defaults = {
-    etcd = "${local.etcd}"
+    image     = "${var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image}"
+    discovery = "${local.discovery == "etcd.io" ? data.external.discovery-etcd-io.0.result.param : ""}"
   }
-  k8s = "${merge(var.k8s, local.defaults)}"
+  k8s = "${merge(var.k8s, map("etcd", merge(var.k8s.etcd, local.defaults)))}"
   /*
     Calculate modifiers to return to the Kubernetes Module to alter parts of it's deployments.
     See outputs for more qualified Documentation of these entries.
   */
-  kubelet_installer = ""
-  kubelet_svc       = ""
-  kubelet_rkt       = ""
+  inject = {
+    installer = "${local.k8s.etcd.type == "pod" ? "ExecStartPre=/bin/cp /etc/ssl/ca.crt /etc/etcd/ca.crt" : ""}"
+    kubelet = {
+      service = ""
+      rkt     = ""
+    }
+  }
 }

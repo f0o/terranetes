@@ -23,19 +23,6 @@ output "manifests" {
   value = "${concat(list(data.ignition_file.cni.id), data.ignition_file.extra.*.id)}"
 }
 
-/*
-  The Kubelet output is a unified way of providing feedback to the Kubernetes 
-  Module to ensure certain hooks or modifications of kubelet (such as mount 
-  points or cmd arguments) are met.
-  `installer`   This denotes systemd entries to be added to the k8s installer
-  `service`     This denotes systemd entries to be added to the kubelet service
-  `rkt`         This denotes arguments passed to the kubelet rkt call
-*/
-
-output "kubelet" {
-  value = {
-    installer = "${local.kubelet_installer}"
-    service   = "${local.kubelet_svc}"
-    rkt       = "${local.kubelet_rkt}"
-  }
+output "inject" {
+  value = "${local.inject}"
 }

@@ -21,11 +21,11 @@ variable "k8s" {
 }
 
 locals {
-  /*
-    Calculate modifiers to return to the Kubernetes Module to alter parts of it's deployments.
-    See outputs for more qualified Documentation of these entries.
-  */
-  kubelet_installer = ""
-  kubelet_svc       = ""
-  kubelet_rkt       = ""
+  inject = {
+    installer = ""
+    kubelet = {
+      service = ""
+      rkt     = ""
+    }
+  }
 }

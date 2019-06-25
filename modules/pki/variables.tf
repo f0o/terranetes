@@ -26,4 +26,11 @@ locals {
     k8s  = "${length(var.k8s.nodes)}"
     etcd = "${var.k8s.etcd.type == "pod" ? length(local.masters) : length(var.k8s.etcd.nodes)}"
   }
+  inject = {
+    installer = ""
+    kubelet = {
+      service = ""
+      rkt     = ""
+    }
+  }
 }

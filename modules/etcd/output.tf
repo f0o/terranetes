@@ -23,3 +23,7 @@ output "manifests" {
 output "files" {
   value = [for k, v in data.ignition_file.etcd-key.*.id : [v, data.ignition_file.etcd-cert[k].id]]
 }
+
+output "inject" {
+  value = "${local.inject}"
+}

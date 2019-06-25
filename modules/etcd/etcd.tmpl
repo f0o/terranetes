@@ -5,28 +5,37 @@ metadata:
     scheduler.alpha.kubernetes.io/critical-pod: ''
   labels:
     app: etcd
+    heritage: terranetes
   name: etcd-$${HOSTNAME}
   namespace: kube-system
 spec:
   containers:
-  - args:
-    - '#!/bin/sh
-      set -o allexport
-      source /etc/etcd/etcd.conf
-      exec etcd
-      '
-    command:
-    - /bin/sh
-    - -c
+  - command:
+    - etcd
+    - --name=etcd-$${HOSTNAME}
+    - --data-dir=/var/lib/etcd
+    - --listen-peer-urls=https://0.0.0.0:2380
+    - --listen-client-urls=https://0.0.0.0:2379
+    - --initial-advertise-peer-urls=https://$${HOST_IP}:2380
+    - --advertise-client-urls=https://$${HOST_IP}:2379
+    - --cert-file=/etc/etcd/etcd.crt
+    - --key-file=/etc/etcd/etcd.key
+    - --trusted-ca-file=/etc/etcd/ca.crt
+    - --peer-cert-file=/etc/etcd/etcd.crt
+    - --peer-key-file=/etc/etcd/etcd.key
+    - --peer-trusted-ca-file=/etc/etcd/ca.crt
+    - --client-cert-auth=true
+    - --peer-client-cert-auth=true
+    - ${discovery}
     image: ${image}
     livenessProbe:
       exec:
         command:
         - etcdctl
         - --cert-file
-        - /etc/etcd/peer.crt
+        - /etc/etcd/etcd.crt
         - --key-file
-        - /etc/etcd/peer.key
+        - /etc/etcd/etcd.key
         - --ca-file
         - /etc/etcd/ca.crt
         - --endpoints
@@ -40,6 +49,12 @@ spec:
     - mountPath: /etc/etcd/
       name: config
       readOnly: true
+    - mountPath: /etc/ssl/
+      name: ssl
+      readOnly: true
+    - mountPath: /usr/share/ca-certificates/
+      name: usr-ssl
+      readOnly: true
     - mountPath: /var/lib/etcd/
       name: data
     workingDir: /var/lib/etcd
@@ -50,6 +65,12 @@ spec:
   - hostPath:
       path: /etc/etcd/
     name: config
+  - hostPath:
+      path: /etc/ssl/
+    name: ssl
+  - hostPath:
+      path: /usr/share/ca-certificates/
+    name: usr-ssl
   - hostPath:
       path: /var/lib/etcd
     name: data

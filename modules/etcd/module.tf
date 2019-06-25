@@ -27,6 +27,11 @@ data "ignition_file" "etcd-pod" {
   }
 }
 
+data "external" "discovery-etcd-io" {
+  count   = "${local.discovery == "etcd.io" ? 1 : 0}"
+  program = ["/bin/sh", "-c", "echo \"{ \\\"param\\\": \\\"--discovery=$(curl -f -q https://discovery.etcd.io/new?size=${local.count} 2>/dev/null)\\\" }\""]
+}
+
 data "ignition_file" "etcd-cert" {
   count      = "${local.count}"
   filesystem = "root"

@@ -29,5 +29,15 @@ output "pki" {
       certs = "${tls_locally_signed_cert.k8s.*.cert_pem}"
       keys  = "${tls_private_key.k8s.*.private_key_pem}"
     }
+    components = {
+      api        = ["${tls_locally_signed_cert.api.0.cert_pem}", "${tls_private_key.api.0.private_key_pem}"]
+      proxy      = ["${tls_locally_signed_cert.proxy.0.cert_pem}", "${tls_private_key.proxy.0.private_key_pem}"]
+      scheduler  = ["${tls_locally_signed_cert.scheduler.0.cert_pem}", "${tls_private_key.scheduler.0.private_key_pem}"]
+      controller = ["${tls_locally_signed_cert.controller.0.cert_pem}", "${tls_private_key.controller.0.private_key_pem}"]
+    }
   }
+}
+
+output "inject" {
+  value = "${local.inject}"
 }
