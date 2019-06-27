@@ -28,6 +28,8 @@ locals {
   version = "${var.k8s.cni.version != "latest" ? var.k8s.cni.version : lookup(lookup(local.cni_types, var.k8s.cni.type), "version")}"
   inject = {
     installer = ""
+    alias     = {}
+    hosts     = ""
     kubelet = {
       service = "${var.k8s.cni.type == "canal" || var.k8s.cni.type == "calico" || var.k8s.cni.type == "calico-typha" ? "ExecStartPre=-/usr/bin/mkdir -p /var/lib/calico" : ""}"
       rkt     = "${var.k8s.cni.type == "canal" || var.k8s.cni.type == "calico" || var.k8s.cni.type == "calico-typha" ? "--volume calico,kind=host,source=/var/lib/calico,readOnly=false,recursive=true --mount volume=calico,target=/var/lib/calico" : ""}"

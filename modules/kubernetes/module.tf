@@ -16,6 +16,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+module "network" {
+  source = "../network"
+  k8s = "${var.k8s}"
+}
+
 module "pki" {
   source = "../pki"
   k8s    = "${local.k8s}"
@@ -73,7 +78,7 @@ data "ignition_systemd_unit" "kubelet" {
   content = <<UNIT
 [Unit]
 Description=Kubernetes Controller Manager
-Requires=network-online.target k8s_installer.service
+Requires=network-online.target
 After=k8s_installer.service docker.service rkt-metadata.service containerd.service
 StartLimitIntervalSec=0
 [Service]
@@ -119,6 +124,8 @@ ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.version} | tee -a /
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=${local.k8s.version} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=${local.k8s.image} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_LABELS=${join(",", local.k8s.nodes[count.index].labels)} | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo $${HOST_IP} $${HOSTNAME} ${join(" ", [for i in local.k8s.nodes[count.index].labels : join(" ", lookup(module.etcd.inject.alias, i, []))])} | tee -a /etc/hosts"
+ExecStartPre=/bin/sh -c "for i in ${module.cni.inject.hosts} ${module.etcd.inject.hosts} ${module.pki.inject.hosts} ${module.sc.inject.hosts}; do echo $i; done | tee -a /etc/hosts"
 ExecStart=/bin/echo started
 [Install]
 WantedBy=multi-user.target

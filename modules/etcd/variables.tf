@@ -25,11 +25,11 @@ variable "pki" {
 }
 
 locals {
-  count     = "${var.k8s.etcd.type == "pod" ? length([for i in var.k8s.nodes : i if contains(i.labels, "master") == true]) : length(var.k8s.etcd.nodes)}"
+  masters   = [for i in var.k8s.nodes : i if contains(i.labels, "master") == true]
+  count     = "${var.k8s.etcd.type == "pod" ? length(local.masters) : length(var.k8s.etcd.nodes)}"
   discovery = "${var.k8s.etcd.discovery == "" ? "etcd.io" : var.k8s.etcd.discovery}"
   defaults = {
-    image     = "${var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image}"
-    discovery = "${local.discovery == "etcd.io" ? data.external.discovery-etcd-io.0.result.param : ""}"
+    image = "${var.k8s.etcd.image == "" ? "k8s.gcr.io/etcd:3.3.10" : var.k8s.etcd.image}"
   }
   k8s = "${merge(var.k8s, map("etcd", merge(var.k8s.etcd, local.defaults)))}"
   /*
@@ -38,6 +38,12 @@ locals {
   */
   inject = {
     installer = "${local.k8s.etcd.type == "pod" ? "ExecStartPre=/bin/cp /etc/ssl/ca.crt /etc/etcd/ca.crt" : ""}"
+    alias = {
+      master = [
+        "${local.k8s.etcd.type == "pod" ? "etcd-$${HOSTNAME}" : ""}"
+      ]
+    }
+    hosts = ""
     kubelet = {
       service = ""
       rkt     = ""

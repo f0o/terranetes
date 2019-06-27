@@ -58,9 +58,11 @@ resource "tls_cert_request" "etcd" {
   count           = "${var.k8s.pki.type == "local" ? local.counts.etcd : 0}"
   key_algorithm   = "ECDSA"
   private_key_pem = "${tls_private_key.etcd.*.private_key_pem[count.index]}"
+  ip_addresses    = ["${var.k8s.etcd.type == "pod" ? "${local.masters[count.index].ip}" : ""}"]
+  dns_names       = ["etcd-k8s-${count.index}"]
 
   subject {
-    common_name  = "Node#${count.index + 1}"
+    common_name  = "etcd-k8s-${count.index}"
     organization = "ETCd"
   }
 }

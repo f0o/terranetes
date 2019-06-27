@@ -16,35 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-data "ignition_file" "etcd-pod" {
-  count      = "${local.k8s.etcd.type == "pod" ? 1 : 0}"
-  filesystem = "root"
-  path       = "/opt/templates/manifests/01-etcd.yaml"
-  mode       = 420
-
-  content {
-    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("masters",local.masters),local.k8s.etcd))}"
-  }
-}
-
-data "ignition_file" "etcd-cert" {
-  count      = "${local.count}"
-  filesystem = "root"
-  path       = "/etc/etcd/etcd.crt"
-  mode       = 420
-
-  content {
-    content = "${var.pki.etcd.certs[count.index]}"
-  }
-}
-
-data "ignition_file" "etcd-key" {
-  count      = "${local.count}"
-  filesystem = "root"
-  path       = "/etc/etcd/etcd.key"
-  mode       = 420
-
-  content {
-    content = "${var.pki.etcd.keys[count.index]}"
-  }
+output "nodes" {
+  value = "${local.nodes}"
 }

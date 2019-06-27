@@ -26,7 +26,7 @@ spec:
     - --peer-trusted-ca-file=/etc/etcd/ca.crt
     - --client-cert-auth=true
     - --peer-client-cert-auth=true
-    - ${discovery}
+    - ${discovery == "static" ? "--initial-cluster=${join(",",[for k,v in masters : "etcd-k8s-${k}=https://${v.ip}:2380"])}" : "--discovery=${discovery}"}
     image: ${image}
     livenessProbe:
       exec:

@@ -23,6 +23,8 @@ variable "k8s" {
 locals {
   inject = {
     installer = ""
+    alias     = {}
+    hosts     = ""
     kubelet = {
       service = ""
       rkt     = ""

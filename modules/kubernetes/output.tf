@@ -23,3 +23,7 @@ output "ignition" {
 output "pki" {
   value = "${local.pki}"
 }
+
+output "k8s" {
+  value = "${local.k8s}"
+}

@@ -27,6 +27,13 @@ variable "k8s" {
       image  = string,
       labels = list(string)
     })),
+    network = object({
+      cidr     = string,
+      upstream = string,
+      dhcp     = string,
+      dns      = string,
+      base     = string
+    })
     etcd = object({
       type      = string,
       discovery = string,
@@ -57,6 +64,11 @@ locals {
     version       = "v${var.k8s.version}"
     version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
     image         = "${var.k8s.image != "" ? var.k8s.image : "docker://gcr.io/google-containers/hyperkube"}"
+    network       = "${merge(var.k8s.network, local.network_default)}"
+    nodes         = "${module.network.nodes}"
+  }
+  network_default = {
+    base = "${var.k8s.network.base != "" ? var.k8s.network.base : 50}"
   }
   pki = "${module.pki.pki}"
   k8s = "${merge(var.k8s, local.defaults)}"

@@ -28,6 +28,8 @@ locals {
   }
   inject = {
     installer = ""
+    alias     = {}
+    hosts     = ""
     kubelet = {
       service = ""
       rkt     = ""
