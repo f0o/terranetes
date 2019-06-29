@@ -5,8 +5,9 @@ metadata:
     scheduler.alpha.kubernetes.io/critical-pod: ''
   labels:
     app: etcd
+    tier: control-plane
     heritage: terranetes
-  name: etcd-$${HOSTNAME}
+  name: etcd
   namespace: kube-system
 spec:
   containers:

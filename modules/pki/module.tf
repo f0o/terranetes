@@ -97,8 +97,8 @@ resource "tls_cert_request" "k8s" {
   private_key_pem = "${tls_private_key.k8s.*.private_key_pem[count.index]}"
 
   subject {
-    common_name  = "system:node:${count.index + 1}"
-    organization = "Kubernetes"
+    common_name  = "system:node:k8s-${count.index}"
+    organization = "system:nodes"
   }
 }
 
@@ -107,7 +107,7 @@ resource "tls_locally_signed_cert" "k8s" {
   ca_key_algorithm   = "ECDSA"
   ca_private_key_pem = "${tls_private_key.ca.0.private_key_pem}"
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
-  cert_request_pem   = "${tls_cert_request.k8s.*.cert_request_pem[count.index]}"
+  cert_request_pem   = "${tls_cert_request.k8s[count.index].cert_request_pem}"
 
   validity_period_hours = 72
   early_renewal_hours   = 24
@@ -120,16 +120,82 @@ resource "tls_locally_signed_cert" "k8s" {
   ]
 }
 
-resource "tls_private_key" "api" {
+resource "tls_private_key" "deployer" {
   count       = "${var.k8s.pki.type == "local" ? 1 : 0}"
   algorithm   = "ECDSA"
   ecdsa_curve = "P384"
 }
 
-resource "tls_cert_request" "api" {
+resource "tls_cert_request" "deployer" {
   count           = "${var.k8s.pki.type == "local" ? 1 : 0}"
   key_algorithm   = "ECDSA"
-  private_key_pem = "${tls_private_key.api.0.private_key_pem}"
+  private_key_pem = "${tls_private_key.deployer.0.private_key_pem}"
+
+  subject {
+    common_name  = "k8s-deployer"
+    organization = "system:masters"
+  }
+}
+
+resource "tls_locally_signed_cert" "deployer" {
+  count              = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  ca_key_algorithm   = "ECDSA"
+  ca_private_key_pem = "${tls_private_key.ca.0.private_key_pem}"
+  ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
+  cert_request_pem   = "${tls_cert_request.deployer.0.cert_request_pem}"
+
+  validity_period_hours = 72
+  early_renewal_hours   = 24
+
+  allowed_uses = [
+    "client_auth",
+  ]
+}
+
+resource "tls_private_key" "admin" {
+  count       = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P384"
+}
+
+resource "tls_cert_request" "admin" {
+  count           = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  key_algorithm   = "ECDSA"
+  private_key_pem = "${tls_private_key.admin.0.private_key_pem}"
+
+  subject {
+    common_name  = "admin"
+    organization = "system:masters"
+  }
+}
+
+resource "tls_locally_signed_cert" "admin" {
+  count              = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  ca_key_algorithm   = "ECDSA"
+  ca_private_key_pem = "${tls_private_key.ca.0.private_key_pem}"
+  ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
+  cert_request_pem   = "${tls_cert_request.admin.0.cert_request_pem}"
+
+  validity_period_hours = 72
+  early_renewal_hours   = 24
+
+  allowed_uses = [
+    "client_auth",
+  ]
+}
+
+resource "tls_private_key" "api" {
+  count       = "${var.k8s.pki.type == "local" ? local.counts.masters : 0}"
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P384"
+}
+
+resource "tls_cert_request" "api" {
+  count           = "${var.k8s.pki.type == "local" ? local.counts.masters : 0}"
+  key_algorithm   = "ECDSA"
+  private_key_pem = "${tls_private_key.api[count.index].private_key_pem}"
+  ip_addresses    = ["${local.masters[count.index].ip}", "10.0.0.1", "127.0.0.1"]
+  dns_names       = ["kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local"]
 
   subject {
     common_name  = "kubernetes"
@@ -138,11 +204,11 @@ resource "tls_cert_request" "api" {
 }
 
 resource "tls_locally_signed_cert" "api" {
-  count              = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  count              = "${var.k8s.pki.type == "local" ? local.counts.masters : 0}"
   ca_key_algorithm   = "ECDSA"
   ca_private_key_pem = "${tls_private_key.ca.0.private_key_pem}"
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
-  cert_request_pem   = "${tls_cert_request.api.0.cert_request_pem}"
+  cert_request_pem   = "${tls_cert_request.api[count.index].cert_request_pem}"
 
   validity_period_hours = 72
   early_renewal_hours   = 24
@@ -168,7 +234,7 @@ resource "tls_cert_request" "proxy" {
 
   subject {
     common_name  = "system:kube-proxy"
-    organization = "Kubernetes"
+    organization = "system:node-proxier"
   }
 }
 
@@ -203,7 +269,7 @@ resource "tls_cert_request" "scheduler" {
 
   subject {
     common_name  = "system:kube-scheduler"
-    organization = "Kubernetes"
+    organization = "system:kube-scheduler"
   }
 }
 
@@ -238,7 +304,7 @@ resource "tls_cert_request" "controller" {
 
   subject {
     common_name  = "system:kube-controller-manager"
-    organization = "Kubernetes"
+    organization = "system:kube-controller-manager"
   }
 }
 
@@ -248,6 +314,41 @@ resource "tls_locally_signed_cert" "controller" {
   ca_private_key_pem = "${tls_private_key.ca.0.private_key_pem}"
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.controller.0.cert_request_pem}"
+
+  validity_period_hours = 72
+  early_renewal_hours   = 24
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+    "client_auth",
+  ]
+}
+
+resource "tls_private_key" "sa" {
+  count       = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P384"
+}
+
+resource "tls_cert_request" "sa" {
+  count           = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  key_algorithm   = "ECDSA"
+  private_key_pem = "${tls_private_key.sa.0.private_key_pem}"
+
+  subject {
+    common_name  = "Service Accounts"
+    organization = "Kubernetes"
+  }
+}
+
+resource "tls_locally_signed_cert" "sa" {
+  count              = "${var.k8s.pki.type == "local" ? 1 : 0}"
+  ca_key_algorithm   = "ECDSA"
+  ca_private_key_pem = "${tls_private_key.ca.0.private_key_pem}"
+  ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
+  cert_request_pem   = "${tls_cert_request.sa.0.cert_request_pem}"
 
   validity_period_hours = 72
   early_renewal_hours   = 24

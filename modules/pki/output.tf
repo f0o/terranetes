@@ -20,6 +20,7 @@ output "pki" {
   value = {
     ca = {
       cert = "${tls_self_signed_cert.ca.0.cert_pem}"
+      key  = "${tls_private_key.ca.0.private_key_pem}"
     }
     etcd = {
       certs = "${tls_locally_signed_cert.etcd.*.cert_pem}"
@@ -30,10 +31,15 @@ output "pki" {
       keys  = "${tls_private_key.k8s.*.private_key_pem}"
     }
     components = {
-      api        = ["${tls_locally_signed_cert.api.0.cert_pem}", "${tls_private_key.api.0.private_key_pem}"]
+      api        = ["${tls_locally_signed_cert.api.*.cert_pem}", "${tls_private_key.api.*.private_key_pem}"]
       proxy      = ["${tls_locally_signed_cert.proxy.0.cert_pem}", "${tls_private_key.proxy.0.private_key_pem}"]
       scheduler  = ["${tls_locally_signed_cert.scheduler.0.cert_pem}", "${tls_private_key.scheduler.0.private_key_pem}"]
       controller = ["${tls_locally_signed_cert.controller.0.cert_pem}", "${tls_private_key.controller.0.private_key_pem}"]
+      sa         = ["${tls_locally_signed_cert.sa.0.cert_pem}", "${tls_private_key.sa.0.private_key_pem}"]
+    }
+    users = {
+      deployer = ["${tls_locally_signed_cert.deployer.0.cert_pem}", "${tls_private_key.deployer.0.private_key_pem}"]
+      admin    = ["${tls_locally_signed_cert.admin.0.cert_pem}", "${tls_private_key.admin.0.private_key_pem}"]
     }
   }
 }

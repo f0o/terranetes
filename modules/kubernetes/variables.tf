@@ -70,11 +70,14 @@ locals {
   network_default = {
     base = "${var.k8s.network.base != "" ? var.k8s.network.base : 50}"
   }
-  pki = "${module.pki.pki}"
-  k8s = "${merge(var.k8s, local.defaults)}"
+  pki       = "${module.pki.pki}"
+  k8s       = "${merge(var.k8s, local.defaults)}"
+  masters   = [for i in local.k8s.nodes : i if contains(i.labels, "master") == true]
+  conmputes = [for i in local.k8s.nodes : i if contains(i.labels, "compute") == true]
+  ingresses = [for i in local.k8s.nodes : i if contains(i.labels, "ingress") == true]
   counts = {
-    master  = "${length([for i in var.k8s.nodes : i if contains(i.labels, "master") == true])}"
-    compute = "${length([for i in var.k8s.nodes : i if contains(i.labels, "compute") == true])}"
-    ingress = "${length([for i in var.k8s.nodes : i if contains(i.labels, "ingress") == true])}"
+    master  = "${length(local.masters)}"
+    compute = "${length(local.conmputes)}"
+    ingress = "${length(local.ingresses)}"
   }
 }

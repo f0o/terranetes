@@ -21,5 +21,5 @@ variable "k8s" {
 }
 
 locals {
-  nodes = [for k,v in var.k8s.nodes : merge(v,map("ip","${cidrhost(var.k8s.network.cidr, k + var.k8s.network.base + 1)}"))]
+  nodes = [for k, v in var.k8s.nodes : merge(v, map("ip", "${cidrhost(var.k8s.network.cidr, k + var.k8s.network.base + 1)}"))]
 }

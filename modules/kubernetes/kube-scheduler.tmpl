@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ""
+  labels:
+    app: kube-scheduler
+    component: kube-scheduler
+    tier: control-plane
+    heritage: terranetes
+  name: kube-scheduler
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - kube-scheduler
+    - --address=127.0.0.1
+    - --leader-elect=true
+    - --kubeconfig=/etc/kubernetes/kube-scheduler.conf
+    image: gcr.io/google_containers/kube-scheduler-amd64:$${KUBERNETES_VERSION}
+    livenessProbe:
+      failureThreshold: 8
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10251
+        scheme: HTTP
+      initialDelaySeconds: 15
+      timeoutSeconds: 15
+    name: kube-scheduler
+    resources:
+      requests:
+        cpu: 100m
+    volumeMounts:
+    - mountPath: /etc/kubernetes/kube-scheduler.conf
+      name: kubeconfig
+      readOnly: true
+    - mountPath: /etc/ssl/k8s/scheduler
+      name: k8s-certs 
+      readOnly: true
+    - mountPath: /etc/ssl/ca.crt
+      name: ca-cert
+      readOnly: true
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  restartPolicy: Always
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/kube-scheduler.conf
+      type: FileOrCreate
+    name: kubeconfig
+  - hostPath:
+      path: /etc/ssl/k8s/scheduler
+      type: DirectoryOrCreate
+    name: k8s-certs
+  - hostPath:
+      path: /etc/ssl/ca.crt
+      type: FileOrCreate
+    name: ca-cert

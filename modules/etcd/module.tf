@@ -23,7 +23,7 @@ data "ignition_file" "etcd-pod" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("masters",local.masters),local.k8s.etcd))}"
+    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("masters", local.masters), local.k8s.etcd))}"
   }
 }
 

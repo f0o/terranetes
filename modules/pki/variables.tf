@@ -23,8 +23,9 @@ variable "k8s" {
 locals {
   masters = [for i in var.k8s.nodes : i if contains(i.labels, "master") == true]
   counts = {
-    k8s  = "${length(var.k8s.nodes)}"
-    etcd = "${var.k8s.etcd.type == "pod" ? length(local.masters) : length(var.k8s.etcd.nodes)}"
+    k8s     = "${length(var.k8s.nodes)}"
+    masters = "${length(local.masters)}"
+    etcd    = "${var.k8s.etcd.type == "pod" ? length(local.masters) : length(var.k8s.etcd.nodes)}"
   }
   inject = {
     installer = ""
