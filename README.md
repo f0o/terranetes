@@ -79,7 +79,7 @@ resource "openstack_compute_instance_v2" "node" {
   stop_before_destroy = true
   security_groups     = ["default", "sshd"]
   network {
-    uuid        = "_SOME_NETWORK_UUID_"
+    uuid        = "_SOME_NETWORK_UUID_" # Make sure this has the CIDR of 192.168.192.0/24 for now
     fixed_ip_v4 = "${module.k8s.k8s.nodes[count.index].ip}"
   }
 }
