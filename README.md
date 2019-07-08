@@ -28,7 +28,7 @@ variable "k8s" {
     etcd = {
       type      = "pod"                     # `pod` is the only supported type right now, later there will be also `vm`
       discovery = "static"                  # Either `static` or an URL from discovery.etcd.io
-      image     = ""                        # Unused in the PoC, for later use when type==vm
+      image     = ""                        # Image to use, defaults to `k8s.gcr.io/etcd:3.3.10`
       nodes = [{                            # Unused in the PoC, for later use when type==vm
         type  = ""
         image = ""
@@ -50,11 +50,13 @@ variable "k8s" {
       type = "local"                        # Only supported PKI for the PKI
     }
     network = {
-      cidr     = "192.168.192.0/24"         # Hardcoded for the PoC due to lack of time
+      cidr     = "192.168.123.0/24"         # Hardcoded for the PoC due to lack of time
       base     = "50"                       # Hardcoded for the PoC due to lack of time
-      dhcp     = ""                         # Unused for the PoC due to lack of time
-      dns      = ""                         # Unused for the PoC due to lack of time
-      upstream = ""                         # Unused for the PoC due to lack of time
+      dhcp     = true                       # Toggle for DHCP settings on network
+      dns      = ["8.8.8.8"]                # List of DNS Servers
+      upstream = "abcd123"                  # Network UUID/Parameter used for providers (UUID of external network for OpenStack)
+      fip      = true                       # Toggle to create Floating IPs (or equivalent)
+      pool     = "FloatingPool"             # Pool to assign Floating IPs from
     }
   }
 }
@@ -62,45 +64,15 @@ variable "k8s" {
 
 ## Example Terraform
 
-This can be used with above object to create a 2 node cluster
+This can be used with above object to create a 2 node cluster based on the OpenStack Provider
 
 ```
-module "k8s" {
-  source = "./modules/kubernetes"
+module "openstack" {
+  source = "./modules/openstack"
   k8s    = "${var.k8s}"
 }
 
-resource "openstack_compute_instance_v2" "node" {
-  count               = "${length(module.k8s.k8s.nodes)}"
-  name                = "k8s-${count.index}"
-  image_name          = "${lookup(var.k8s.nodes[count.index], "image")}"
-  flavor_name         = "${lookup(var.k8s.nodes[count.index], "type")}"
-  user_data           = "${module.k8s.ignition[count.index]}"
-  stop_before_destroy = true
-  security_groups     = ["default", "sshd"]
-  network {
-    uuid        = "_SOME_NETWORK_UUID_" # Make sure this has the CIDR of 192.168.192.0/24 for now
-    fixed_ip_v4 = "${module.k8s.k8s.nodes[count.index].ip}"
-  }
-}
-
-resource "openstack_networking_floatingip_v2" "fip" {
-  count = "${length(module.k8s.k8s.nodes)}"
-  pool  = "_SOME_FLOATING_IP_POOL_"
-}
-
-resource "openstack_compute_floatingip_associate_v2" "fip" {
-  count       = "${length(module.k8s.k8s.nodes)}"
-  floating_ip = "${openstack_networking_floatingip_v2.fip[count.index].address}"
-  instance_id = "${openstack_compute_instance_v2.node[count.index].id}"
-  fixed_ip    = "${openstack_compute_instance_v2.node[count.index].network.0.fixed_ip_v4}"
-}
-
-output "fip" {
-  value = "${openstack_networking_floatingip_v2.fip.*.address}"
-}
-
 output "admin" {
-  value = "${module.k8s.pki.users.admin}"
+  value = "${module.openstack.k8s.pki.users.admin}"
 }
 ```

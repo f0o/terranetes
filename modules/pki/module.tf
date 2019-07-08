@@ -33,7 +33,7 @@ resource "tls_self_signed_cert" "ca" {
   }
 
   is_ca_certificate     = true
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -74,7 +74,7 @@ resource "tls_locally_signed_cert" "etcd" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.etcd.*.cert_request_pem[count.index]}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -109,7 +109,7 @@ resource "tls_locally_signed_cert" "k8s" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.k8s[count.index].cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -144,7 +144,7 @@ resource "tls_locally_signed_cert" "deployer" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.deployer.0.cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -176,7 +176,7 @@ resource "tls_locally_signed_cert" "admin" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.admin.0.cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -210,7 +210,7 @@ resource "tls_locally_signed_cert" "api" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.api[count.index].cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -245,7 +245,7 @@ resource "tls_locally_signed_cert" "proxy" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.proxy.0.cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -280,7 +280,7 @@ resource "tls_locally_signed_cert" "scheduler" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.scheduler.0.cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -315,7 +315,7 @@ resource "tls_locally_signed_cert" "controller" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.controller.0.cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [
@@ -350,7 +350,7 @@ resource "tls_locally_signed_cert" "sa" {
   ca_cert_pem        = "${tls_self_signed_cert.ca.0.cert_pem}"
   cert_request_pem   = "${tls_cert_request.sa.0.cert_request_pem}"
 
-  validity_period_hours = 72
+  validity_period_hours = 8766
   early_renewal_hours   = 24
 
   allowed_uses = [

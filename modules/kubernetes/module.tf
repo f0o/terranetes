@@ -82,7 +82,7 @@ RemainAfterExit=True
 EnvironmentFile=/etc/environment
 ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/manifests ]; then exit 0; fi; for i in /opt/templates/manifests/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/manifests/$(basename $i); done'
 ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/post-deploy ]; then exit 0; fi; for i in /opt/templates/post-deploy/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/post-deploy/$(basename $i); done'
-ExecStart=/bin/sh -c 'if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://192.168.192.51:6443/healthz)" != "ok" ]; do sleep 60; done; sleep 60; for i in /opt/post-deploy/*.yaml; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi'
+ExecStart=/bin/sh -c 'if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://192.168.123.51:6443/healthz)" != "ok" ]; do sleep 60; done; sleep 60; for i in /opt/post-deploy/*.yaml; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi'
 Restart=on-failure
 RestartSec=10
 TimeoutSec=0
@@ -167,7 +167,7 @@ SyslogIdentifier=kubelet
 EnvironmentFile=/etc/environment
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/bin/sh -c 'while [ "$(curl -k https://192.168.192.51:6443/healthz)" != "ok" ]; do sleep 60; done; sleep 60; /opt/bin/kubectl --kubeconfig /etc/kubernetes/kubelet.conf uncordon $HOSTNAME'
+ExecStart=/bin/sh -c 'while [ "$(curl -k https://192.168.123.51:6443/healthz)" != "ok" ]; do sleep 60; done; sleep 60; /opt/bin/kubectl --kubeconfig /etc/kubernetes/kubelet.conf uncordon $HOSTNAME'
 ExecStop=/opt/bin/kubectl --kubeconfig=/etc/kubernetes/kubelet.conf drain $HOSTNAME --ignore-daemonsets --force --grace-period=60
 ExecStopPost=/opt/bin/kubectl --kubeconfig=/etc/kubernetes/kubelet.conf delete node $HOSTNAME
 TimeoutStopSec=0
@@ -341,7 +341,7 @@ data "ignition_file" "deployer-conf" {
   mode = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.192.51", "user", "k8s-deployer", "crt", "/opt/tmp/deployer.crt", "key", "/opt/tmp/deployer.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.123.51", "user", "k8s-deployer", "crt", "/opt/tmp/deployer.crt", "key", "/opt/tmp/deployer.key"))}"
   }
 }
 
@@ -352,7 +352,7 @@ data "ignition_file" "kubelet-conf" {
   mode = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.192.51", "user", "system:node:k8s-${count.index}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.123.51", "user", "system:node:k8s-${count.index}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key"))}"
   }
 }
 
@@ -362,7 +362,7 @@ data "ignition_file" "controller-conf" {
   mode = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.192.51", "user", "system:kube-controller-manager", "crt", "/etc/ssl/k8s/controller/controller.crt", "key", "/etc/ssl/k8s/controller/controller.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.123.51", "user", "system:kube-controller-manager", "crt", "/etc/ssl/k8s/controller/controller.crt", "key", "/etc/ssl/k8s/controller/controller.key"))}"
   }
 }
 
@@ -372,7 +372,7 @@ data "ignition_file" "scheduler-conf" {
   mode = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.192.51", "user", "system:kube-scheduler", "crt", "/etc/ssl/k8s/scheduler/scheduler.crt", "key", "/etc/ssl/k8s/scheduler/scheduler.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "192.168.123.51", "user", "system:kube-scheduler", "crt", "/etc/ssl/k8s/scheduler/scheduler.crt", "key", "/etc/ssl/k8s/scheduler/scheduler.key"))}"
   }
 }
 
@@ -412,7 +412,7 @@ data "ignition_file" "kube-proxy" {
   mode = 420
 
   content {
-    content = "${templatefile("${path.module}/kube-proxy.tmpl", merge(local.k8s, local.pki, map("api", "192.168.192.51")))}"
+    content = "${templatefile("${path.module}/kube-proxy.tmpl", merge(local.k8s, local.pki, map("api", "192.168.123.51")))}"
   }
 }
 

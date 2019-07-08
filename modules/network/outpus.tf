@@ -19,3 +19,7 @@
 output "nodes" {
   value = "${local.nodes}"
 }
+
+output "network" {
+  value = "${local.network}"
+}

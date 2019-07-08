@@ -21,11 +21,6 @@ variable "k8s" {
 }
 
 locals {
-  nodes = [for k, v in var.k8s.nodes : merge(v, map("ip", "${cidrhost(var.k8s.network.cidr, k + var.k8s.network.base + 1)}"))]
-  defaults = {
-    dns  = "8.8.8.8"
-    dhcp = true
-    base = "${var.k8s.network.base != "" ? var.k8s.network.base : 50}"
-  }
-  network = "${merge(local.defaults, var.k8s.network)}"
+  k8s      = "${module.k8s.k8s}"
+  ignition = "${module.k8s.ignition}"
 }
