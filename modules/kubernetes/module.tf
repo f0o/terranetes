@@ -108,7 +108,7 @@ Environment="RKT_GLOBAL_ARGS=--insecure-options=image"
 Environment="KUBELET_KUBECONFIG_ARGS=--kubeconfig=/etc/kubernetes/kubelet.conf"
 Environment="KUBELET_SYSTEM_PODS_ARGS=--pod-manifest-path=/opt/manifests --allow-privileged=true"
 Environment="KUBELET_NETWORK_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"
-Environment="KUBELET_DNS_ARGS=--cluster-dns=10.245.0.10 --cluster-domain=cluster.local"
+Environment="KUBELET_DNS_ARGS=--cluster-dns=10.0.0.2 --cluster-domain=cluster.local"
 Environment="KUBELET_AUTHZ_ARGS=--authorization-mode=AlwaysAllow --client-ca-file=/etc/ssl/ca.crt"
 Environment="KUBELET_CGROUP_ARGS=--cgroup-driver=cgroupfs"
 Environment="KUBELET_CADVISOR_ARGS="
@@ -416,6 +416,16 @@ data "ignition_file" "kube-proxy" {
   }
 }
 
+data "ignition_file" "coredns" {
+  filesystem = "root"
+  path = "/opt/templates/post-deploy/05-coredns.yaml"
+  mode = 420
+
+  content {
+    content = "${templatefile("${path.module}/coredns.tmpl", merge(local.k8s, local.pki, map("api", "${local.k8s.network.api}")))}"
+  }
+}
+
 data "ignition_config" "ignition" {
   count = "${length(local.k8s.nodes)}"
   files = "${compact(concat(
@@ -440,6 +450,7 @@ data "ignition_config" "ignition" {
       data.ignition_file.controller-conf.id,
       data.ignition_file.scheduler-conf.id,
       data.ignition_file.kube-proxy.id,
+      data.ignition_file.coredns.id,
       ),
       module.sc.manifests, module.etcd.manifests
       ) : contains(local.k8s.nodes[count.index].labels, "compute") ? list(//Node is Compute
