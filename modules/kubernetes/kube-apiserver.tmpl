@@ -31,8 +31,8 @@ spec:
     - --etcd-servers=${etcd.type == "pod" ? "${join(",",[for v in masters : "https://${v.ip}:2379"])}" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"}
     - --event-ttl=1h
     - --kubelet-certificate-authority=/etc/ssl/ca.crt
-    - --kubelet-client-certificate=/etc/ssl/k8s/kubelet/kubelet.crt
-    - --kubelet-client-key=/etc/ssl/k8s/kubelet/kubelet.key
+    - --kubelet-client-certificate=/etc/ssl/k8s/api/api.crt
+    - --kubelet-client-key=/etc/ssl/k8s/api/api.key
     - --kubelet-https=true
     - --service-account-key-file=/etc/ssl/k8s/sa/sa.key
     - --service-node-port-range=30000-35000

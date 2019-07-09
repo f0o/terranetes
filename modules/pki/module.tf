@@ -197,7 +197,7 @@ resource "tls_cert_request" "api" {
   key_algorithm   = "ECDSA"
   private_key_pem = "${tls_private_key.api[count.index].private_key_pem}"
   ip_addresses    = ["${local.masters[count.index].ip}", "10.0.0.1", "127.0.0.1"]
-  dns_names       = ["kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local"]
+  dns_names       = ["kubernetes", "kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local"]
 
   subject {
     common_name  = "kubernetes"

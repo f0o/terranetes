@@ -112,7 +112,7 @@ Environment="KUBELET_DNS_ARGS=--cluster-dns=10.245.0.10 --cluster-domain=cluster
 Environment="KUBELET_AUTHZ_ARGS=--authorization-mode=AlwaysAllow --client-ca-file=/etc/ssl/ca.crt"
 Environment="KUBELET_CGROUP_ARGS=--cgroup-driver=cgroupfs"
 Environment="KUBELET_CADVISOR_ARGS="
-Environment="KUBELET_CERTIFICATE_ARGS=--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki"
+Environment="KUBELET_CERTIFICATE_ARGS=--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki --tls-cert-file=/etc/ssl/k8s/kubelet/kubelet.crt --tls-private-key-file=/etc/ssl/k8s/kubelet/kubelet.key"
 Environment="KUBELET_EXTRA_ARGS=--feature-gates=PersistentLocalVolumes=true,VolumeScheduling=true"
 Environment="RKT_RUN_ARGS=--volume local-volumes,kind=host,source=/local-volumes,readOnly=false,recursive=true --mount volume=local-volumes,target=/local-volumes --volume opt,kind=host,source=/opt,readOnly=false,recursive=true --mount volume=opt,target=/opt --volume ssl-kubelet,kind=host,source=/etc/ssl/k8s/kubelet,readOnly=false,recursive=true --mount volume=ssl-kubelet,target=/etc/ssl/k8s/kubelet --volume ca-kubelet,kind=host,source=/etc/ssl/ca.crt,readOnly=true --mount volume=ca-kubelet,target=/etc/ssl/ca.crt --volume cni,kind=host,source=/etc/cni,readOnly=false,recursive=true --mount volume=cni,target=/etc/cni --volume resolv-conf,kind=host,source=/etc/resolv.conf --mount volume=resolv-conf,target=/etc/resolv.conf ${module.cni.inject.kubelet.rkt}"
 ${module.cni.inject.kubelet.service}
