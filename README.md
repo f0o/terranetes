@@ -73,6 +73,6 @@ module "openstack" {
 }
 
 output "admin" {
-  value = "${module.openstack.k8s.pki.users.admin}"
+  value = "${module.openstack.pki.users.admin}"
 }
 ```
