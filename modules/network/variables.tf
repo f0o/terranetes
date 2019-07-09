@@ -26,6 +26,7 @@ locals {
     dns  = "8.8.8.8"
     dhcp = true
     base = "${var.k8s.network.base != "" ? var.k8s.network.base : 50}"
+    api  = "${element([for v in local.nodes : v.ip if contains(v.labels, "master") ],0)}"
   }
   network = "${merge(local.defaults, var.k8s.network)}"
 }

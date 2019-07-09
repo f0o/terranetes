@@ -82,7 +82,7 @@ resource "openstack_compute_instance_v2" "node" {
 
 resource "openstack_networking_floatingip_v2" "fip" {
   count = "${local.k8s.network.fip ? length(local.k8s.nodes) : 0}"
-  pool  = "185.243.23.80/28"
+  pool  = "${local.k8s.network.pool}"
 }
 
 resource "openstack_compute_floatingip_associate_v2" "fip" {

@@ -50,8 +50,8 @@ variable "k8s" {
       type = "local"                        # Only supported PKI for the PKI
     }
     network = {
-      cidr     = "192.168.123.0/24"         # Hardcoded for the PoC due to lack of time
-      base     = "50"                       # Hardcoded for the PoC due to lack of time
+      cidr     = "192.168.123.0/24"         # CIDR for private network
+      base     = "50"                       # Base IP for allocation of nodes
       dhcp     = true                       # Toggle for DHCP settings on network
       dns      = ["8.8.8.8"]                # List of DNS Servers
       upstream = "abcd123"                  # Network UUID/Parameter used for providers (UUID of external network for OpenStack)

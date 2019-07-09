@@ -19,3 +19,6 @@
 output "k8s" {
   value = "${local.k8s}"
 }
+output "pki" {
+  value = "${module.k8s.pki}"
+}

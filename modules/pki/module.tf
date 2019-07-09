@@ -95,6 +95,8 @@ resource "tls_cert_request" "k8s" {
   count           = "${var.k8s.pki.type == "local" ? local.counts.k8s : 0}"
   key_algorithm   = "ECDSA"
   private_key_pem = "${tls_private_key.k8s.*.private_key_pem[count.index]}"
+  ip_addresses    = ["${var.k8s.nodes[count.index].ip}"]
+  dns_names       = ["k8s-${count.index}"]
 
   subject {
     common_name  = "system:node:k8s-${count.index}"
