@@ -82,7 +82,7 @@ RemainAfterExit=True
 EnvironmentFile=/etc/environment
 ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/manifests ]; then exit 0; fi; for i in /opt/templates/manifests/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/manifests/$(basename $i); done'
 ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/post-deploy ]; then exit 0; fi; for i in /opt/templates/post-deploy/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/post-deploy/$(basename $i); done'
-ExecStart=/bin/sh -c 'if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://${local.k8s.network.api}:6443/healthz)" != "ok" ]; do sleep 60; done; sleep 60; for i in /opt/post-deploy/*.yaml; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi'
+ExecStart=/bin/sh -c 'if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://${local.k8s.network.api}:6443/healthz)" != "ok" ]; do sleep 10; done; sleep 30; for i in /opt/post-deploy/*.yaml; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi'
 Restart=on-failure
 RestartSec=10
 TimeoutSec=0
@@ -151,28 +151,6 @@ ExecStartPre=/bin/sh -c "for i in ${module.cni.inject.hosts} ${module.etcd.injec
 ExecStart=/bin/echo started
 [Install]
 WantedBy=multi-user.target
-UNIT
-}
-
-data "ignition_systemd_unit" "drainer" {
-  name    = "drainer.service"
-  enabled = true
-
-  content = <<UNIT
-[Unit]
-Description=Simple Service to Drain the current node and force migration of resources before shutdown
-After=kubelet.service docker.service rkt-metadata.service containerd.service
-[Service]
-SyslogIdentifier=kubelet
-EnvironmentFile=/etc/environment
-Type=oneshot
-RemainAfterExit=true
-ExecStart=/bin/sh -c 'while [ "$(curl -k https://${local.k8s.network.api}:6443/healthz)" != "ok" ]; do sleep 60; done; sleep 60; /opt/bin/kubectl --kubeconfig /etc/kubernetes/kubelet.conf uncordon $HOSTNAME'
-ExecStop=/opt/bin/kubectl --kubeconfig=/etc/kubernetes/kubelet.conf drain $HOSTNAME --ignore-daemonsets --force --grace-period=60
-ExecStopPost=/opt/bin/kubectl --kubeconfig=/etc/kubernetes/kubelet.conf delete node $HOSTNAME
-TimeoutStopSec=0
-[Install]
-WantedBy=kubelet.service
 UNIT
 }
 
@@ -426,6 +404,56 @@ data "ignition_file" "coredns" {
   }
 }
 
+data "ignition_file" "uo-10" {
+  filesystem = "root"
+  path = "/opt/templates/post-deploy/10-uo.yaml"
+  mode = 420
+
+  source {
+    source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/00-namespace.yaml"
+  }
+}
+
+data "ignition_file" "uo-11" {
+  filesystem = "root"
+  path = "/opt/templates/post-deploy/11-uo.yaml"
+  mode = 420
+
+  source {
+    source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/rbac/cluster-role.yaml"
+  }
+}
+
+data "ignition_file" "uo-12" {
+  filesystem = "root"
+  path = "/opt/templates/post-deploy/12-uo.yaml"
+  mode = 420
+
+  source {
+    source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/rbac/cluster-role-binding.yaml"
+  }
+}
+
+data "ignition_file" "uo-13" {
+  filesystem = "root"
+  path = "/opt/templates/post-deploy/13-uo.yaml"
+  mode = 420
+
+  source {
+    source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/update-agent.yaml"
+  }
+}
+
+data "ignition_file" "uo-14" {
+  filesystem = "root"
+  path = "/opt/templates/post-deploy/14-uo.yaml"
+  mode = 420
+
+  source {
+    source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/update-operator.yaml"
+  }
+}
+
 data "ignition_config" "ignition" {
   count = "${length(local.k8s.nodes)}"
   files = "${compact(concat(
@@ -462,6 +490,11 @@ data "ignition_config" "ignition" {
       local.k8s.pki.type == "local" ? data.ignition_file.kubelet-cert[count.index].id : "",
       local.k8s.pki.type == "local" ? data.ignition_file.kubelet-key[count.index].id : "",
       data.ignition_file.kubelet-conf[count.index].id,
+      data.ignition_file.uo-10.id,
+      data.ignition_file.uo-11.id,
+      data.ignition_file.uo-12.id,
+      data.ignition_file.uo-13.id,
+      data.ignition_file.uo-14.id,
     ),
     data.ignition_file.ca-cert.*.id, module.cni.manifests
   ))}"
@@ -471,6 +504,5 @@ data "ignition_config" "ignition" {
     "${data.ignition_systemd_unit.installer[count.index].id}",
     "${data.ignition_systemd_unit.deployer.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
-    "${data.ignition_systemd_unit.drainer.id}",
   ]
 }
