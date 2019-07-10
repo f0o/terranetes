@@ -99,7 +99,7 @@ resource "tls_cert_request" "k8s" {
   dns_names       = ["k8s-${count.index}"]
 
   subject {
-    common_name  = "system:node:k8s-${count.index}"
+    common_name  = "system:node:${var.k8s.nodes[count.index].ip}"
     organization = "system:nodes"
   }
 }

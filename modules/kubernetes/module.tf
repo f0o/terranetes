@@ -137,10 +137,11 @@ ConditionFirstBoot=True
 [Service]
 EnvironmentFile=/etc/environment
 RemainAfterExit=True
-ExecStartPre=/bin/sh -c "echo HOSTNAME=k8s-${count.index} | tee /etc/environment"
-ExecStartPre=/usr/bin/hostnamectl set-hostname $HOSTNAME
-ExecStartPre=/bin/sh -c "echo HOSTNAME_BIOS=$(hostname) | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo HOSTNAME_BIOS=$(hostname) | tee /etc/environment"
+ExecStartPre=/bin/sh -c "echo HOSTNAME_CLOUD=k8s-${count.index} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo HOST_IP=$(ip a | grep en | tail -n 1 | cut -d / -f 1 | rev |  cut -d \  -f 1 | rev) | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo HOSTNAME=$${HOST_IP} | tee -a /etc/environment"
+ExecStartPre=/usr/bin/hostnamectl set-hostname $${HOST_IP}
 ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.version} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=${local.k8s.version} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=${local.k8s.image} | tee -a /etc/environment"
@@ -155,15 +156,15 @@ UNIT
 }
 
 data "ignition_user" "core" {
-  name = "core"
+  name                = "core"
   ssh_authorized_keys = "${local.k8s.pubkeys}"
 }
 
 data "ignition_file" "kubelet-cert" {
-  count = "${local.k8s.pki.type == "local" ? length(var.k8s.nodes) : 0}"
+  count      = "${local.k8s.pki.type == "local" ? length(var.k8s.nodes) : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/kubelet/kubelet.crt"
-  mode = 420
+  path       = "/etc/ssl/k8s/kubelet/kubelet.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.k8s.certs[count.index]}"
@@ -171,10 +172,10 @@ data "ignition_file" "kubelet-cert" {
 }
 
 data "ignition_file" "kubelet-key" {
-  count = "${local.k8s.pki.type == "local" ? length(var.k8s.nodes) : 0}"
+  count      = "${local.k8s.pki.type == "local" ? length(var.k8s.nodes) : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/kubelet/kubelet.key"
-  mode = 420
+  path       = "/etc/ssl/k8s/kubelet/kubelet.key"
+  mode       = 420
 
   content {
     content = "${local.pki.k8s.keys[count.index]}"
@@ -182,10 +183,10 @@ data "ignition_file" "kubelet-key" {
 }
 
 data "ignition_file" "ca-cert" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/ca.crt"
-  mode = 420
+  path       = "/etc/ssl/ca.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.ca.cert}"
@@ -193,10 +194,10 @@ data "ignition_file" "ca-cert" {
 }
 
 data "ignition_file" "ca-key" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/ca.key"
-  mode = 420
+  path       = "/etc/ssl/ca.key"
+  mode       = 420
 
   content {
     content = "${local.pki.ca.key}"
@@ -204,10 +205,10 @@ data "ignition_file" "ca-key" {
 }
 
 data "ignition_file" "api-cert" {
-  count = "${local.k8s.pki.type == "local" ? "${local.counts.master}" : 0}"
+  count      = "${local.k8s.pki.type == "local" ? "${local.counts.master}" : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/api/api.crt"
-  mode = 420
+  path       = "/etc/ssl/k8s/api/api.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.components.api[0][count.index]}"
@@ -215,10 +216,10 @@ data "ignition_file" "api-cert" {
 }
 
 data "ignition_file" "api-key" {
-  count = "${local.k8s.pki.type == "local" ? "${local.counts.master}" : 0}"
+  count      = "${local.k8s.pki.type == "local" ? "${local.counts.master}" : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/api/api.key"
-  mode = 420
+  path       = "/etc/ssl/k8s/api/api.key"
+  mode       = 420
 
   content {
     content = "${local.pki.components.api[1][count.index]}"
@@ -226,10 +227,10 @@ data "ignition_file" "api-key" {
 }
 
 data "ignition_file" "controller-cert" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/controller/controller.crt"
-  mode = 420
+  path       = "/etc/ssl/k8s/controller/controller.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.components.controller[0]}"
@@ -237,10 +238,10 @@ data "ignition_file" "controller-cert" {
 }
 
 data "ignition_file" "controller-key" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/controller/controller.key"
-  mode = 420
+  path       = "/etc/ssl/k8s/controller/controller.key"
+  mode       = 420
 
   content {
     content = "${local.pki.components.controller[1]}"
@@ -248,10 +249,10 @@ data "ignition_file" "controller-key" {
 }
 
 data "ignition_file" "scheduler-cert" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/scheduler/scheduler.crt"
-  mode = 420
+  path       = "/etc/ssl/k8s/scheduler/scheduler.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.components.scheduler[0]}"
@@ -259,10 +260,10 @@ data "ignition_file" "scheduler-cert" {
 }
 
 data "ignition_file" "scheduler-key" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/scheduler/scheduler.key"
-  mode = 420
+  path       = "/etc/ssl/k8s/scheduler/scheduler.key"
+  mode       = 420
 
   content {
     content = "${local.pki.components.scheduler[1]}"
@@ -270,10 +271,10 @@ data "ignition_file" "scheduler-key" {
 }
 
 data "ignition_file" "sa-cert" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/sa/sa.crt"
-  mode = 420
+  path       = "/etc/ssl/k8s/sa/sa.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.components.sa[0]}"
@@ -281,10 +282,10 @@ data "ignition_file" "sa-cert" {
 }
 
 data "ignition_file" "sa-key" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/etc/ssl/k8s/sa/sa.key"
-  mode = 420
+  path       = "/etc/ssl/k8s/sa/sa.key"
+  mode       = 420
 
   content {
     content = "${local.pki.components.sa[1]}"
@@ -292,10 +293,10 @@ data "ignition_file" "sa-key" {
 }
 
 data "ignition_file" "deployer-cert" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/opt/tmp/deployer.crt"
-  mode = 420
+  path       = "/opt/tmp/deployer.crt"
+  mode       = 420
 
   content {
     content = "${local.pki.users.deployer[0]}"
@@ -303,10 +304,10 @@ data "ignition_file" "deployer-cert" {
 }
 
 data "ignition_file" "deployer-key" {
-  count = "${local.k8s.pki.type == "local" ? 1 : 0}"
+  count      = "${local.k8s.pki.type == "local" ? 1 : 0}"
   filesystem = "root"
-  path = "/opt/tmp/deployer.key"
-  mode = 420
+  path       = "/opt/tmp/deployer.key"
+  mode       = 420
 
   content {
     content = "${local.pki.users.deployer[1]}"
@@ -315,8 +316,8 @@ data "ignition_file" "deployer-key" {
 
 data "ignition_file" "deployer-conf" {
   filesystem = "root"
-  path = "/opt/tmp/deployer.conf"
-  mode = 420
+  path       = "/opt/tmp/deployer.conf"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "k8s-deployer", "crt", "/opt/tmp/deployer.crt", "key", "/opt/tmp/deployer.key"))}"
@@ -324,10 +325,10 @@ data "ignition_file" "deployer-conf" {
 }
 
 data "ignition_file" "kubelet-conf" {
-  count = "${length(local.k8s.nodes)}"
+  count      = "${length(local.k8s.nodes)}"
   filesystem = "root"
-  path = "/etc/kubernetes/kubelet.conf"
-  mode = 420
+  path       = "/etc/kubernetes/kubelet.conf"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:node:k8s-${count.index}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key"))}"
@@ -336,8 +337,8 @@ data "ignition_file" "kubelet-conf" {
 
 data "ignition_file" "controller-conf" {
   filesystem = "root"
-  path = "/etc/kubernetes/kube-controller-manager.conf"
-  mode = 420
+  path       = "/etc/kubernetes/kube-controller-manager.conf"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:kube-controller-manager", "crt", "/etc/ssl/k8s/controller/controller.crt", "key", "/etc/ssl/k8s/controller/controller.key"))}"
@@ -346,8 +347,8 @@ data "ignition_file" "controller-conf" {
 
 data "ignition_file" "scheduler-conf" {
   filesystem = "root"
-  path = "/etc/kubernetes/kube-scheduler.conf"
-  mode = 420
+  path       = "/etc/kubernetes/kube-scheduler.conf"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:kube-scheduler", "crt", "/etc/ssl/k8s/scheduler/scheduler.crt", "key", "/etc/ssl/k8s/scheduler/scheduler.key"))}"
@@ -356,8 +357,8 @@ data "ignition_file" "scheduler-conf" {
 
 data "ignition_file" "kube-apiserver" {
   filesystem = "root"
-  path = "/opt/templates/manifests/02-kube-apiserver.yaml"
-  mode = 420
+  path       = "/opt/templates/manifests/02-kube-apiserver.yaml"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kube-apiserver.tmpl", merge(local.k8s, map("masters", local.masters)))}"
@@ -366,8 +367,8 @@ data "ignition_file" "kube-apiserver" {
 
 data "ignition_file" "kube-controller-manager" {
   filesystem = "root"
-  path = "/opt/templates/manifests/03-kube-controller-manager.yaml"
-  mode = 420
+  path       = "/opt/templates/manifests/03-kube-controller-manager.yaml"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kube-controller-manager.tmpl", merge(local.k8s, map("masters", local.masters)))}"
@@ -376,8 +377,8 @@ data "ignition_file" "kube-controller-manager" {
 
 data "ignition_file" "kube-scheduler" {
   filesystem = "root"
-  path = "/opt/templates/manifests/04-kube-scheduler.yaml"
-  mode = 420
+  path       = "/opt/templates/manifests/04-kube-scheduler.yaml"
+  mode       = 420
 
   content {
     content = "${templatefile("${path.module}/kube-scheduler.tmpl", merge(local.k8s, map("masters", local.masters)))}"
@@ -386,28 +387,28 @@ data "ignition_file" "kube-scheduler" {
 
 data "ignition_file" "kube-proxy" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/01-kube-proxy.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/01-kube-proxy.yaml"
+  mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kube-proxy.tmpl", merge(local.k8s, local.pki, map("api", "${local.k8s.network.api}")))}"
+    content = "${templatefile("${path.module}/kube-proxy.tmpl", merge(local.k8s, map("key", indent(4, "${local.pki.components.proxy[1]}"), "cert", indent(4, "${local.pki.components.proxy[0]}"))))}"
   }
 }
 
 data "ignition_file" "coredns" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/05-coredns.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/05-coredns.yaml"
+  mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/coredns.tmpl", merge(local.k8s, local.pki, map("api", "${local.k8s.network.api}")))}"
+    content = "${file("${path.module}/coredns.tmpl")}"
   }
 }
 
 data "ignition_file" "uo-10" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/10-uo.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/10-uo.yaml"
+  mode       = 420
 
   source {
     source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/00-namespace.yaml"
@@ -416,8 +417,8 @@ data "ignition_file" "uo-10" {
 
 data "ignition_file" "uo-11" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/11-uo.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/11-uo.yaml"
+  mode       = 420
 
   source {
     source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/rbac/cluster-role.yaml"
@@ -426,8 +427,8 @@ data "ignition_file" "uo-11" {
 
 data "ignition_file" "uo-12" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/12-uo.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/12-uo.yaml"
+  mode       = 420
 
   source {
     source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/rbac/cluster-role-binding.yaml"
@@ -436,8 +437,8 @@ data "ignition_file" "uo-12" {
 
 data "ignition_file" "uo-13" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/13-uo.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/13-uo.yaml"
+  mode       = 420
 
   source {
     source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/update-agent.yaml"
@@ -446,8 +447,8 @@ data "ignition_file" "uo-13" {
 
 data "ignition_file" "uo-14" {
   filesystem = "root"
-  path = "/opt/templates/post-deploy/14-uo.yaml"
-  mode = 420
+  path       = "/opt/templates/post-deploy/14-uo.yaml"
+  mode       = 420
 
   source {
     source = "https://raw.githubusercontent.com/coreos/container-linux-update-operator/master/examples/deploy/update-operator.yaml"
@@ -457,7 +458,7 @@ data "ignition_file" "uo-14" {
 data "ignition_config" "ignition" {
   count = "${length(local.k8s.nodes)}"
   files = "${compact(concat(
-    contains(local.k8s.nodes[count.index].labels, "master") ? concat(list(//Node is Master
+    contains(local.k8s.nodes[count.index].labels, "master") ? concat(list( //Node is Master
       local.k8s.etcd.type == "pod" ? module.etcd.files[count.index][0] : "",
       local.k8s.etcd.type == "pod" ? module.etcd.files[count.index][1] : "",
       local.k8s.pki.type == "local" ? data.ignition_file.api-cert.0.id : "",
@@ -479,22 +480,22 @@ data "ignition_config" "ignition" {
       data.ignition_file.scheduler-conf.id,
       data.ignition_file.kube-proxy.id,
       data.ignition_file.coredns.id,
+      data.ignition_file.uo-10.id,
+      data.ignition_file.uo-11.id,
+      data.ignition_file.uo-12.id,
+      data.ignition_file.uo-13.id,
+      data.ignition_file.uo-14.id,
       ),
       module.sc.manifests, module.etcd.manifests
-      ) : contains(local.k8s.nodes[count.index].labels, "compute") ? list(//Node is Compute
+      ) : contains(local.k8s.nodes[count.index].labels, "compute") ? list( //Node is Compute
       ""
-      ) : list(//Node is anything else
+      ) : list( //Node is anything else
       ""
     ),
     list(
       local.k8s.pki.type == "local" ? data.ignition_file.kubelet-cert[count.index].id : "",
       local.k8s.pki.type == "local" ? data.ignition_file.kubelet-key[count.index].id : "",
       data.ignition_file.kubelet-conf[count.index].id,
-      data.ignition_file.uo-10.id,
-      data.ignition_file.uo-11.id,
-      data.ignition_file.uo-12.id,
-      data.ignition_file.uo-13.id,
-      data.ignition_file.uo-14.id,
     ),
     data.ignition_file.ca-cert.*.id, module.cni.manifests
   ))}"

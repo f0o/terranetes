@@ -72,9 +72,9 @@ resource "openstack_compute_instance_v2" "node" {
   name                = "k8s-${count.index}"
   image_name          = "${lookup(local.k8s.nodes[count.index], "image")}"
   flavor_name         = "${lookup(local.k8s.nodes[count.index], "type")}"
-  user_data           = "${local.ignition[count.index]}"
+  user_data           = "${local.ignition[count.index].rendered}"
   stop_before_destroy = true
-  security_groups     = ["${openstack_networking_secgroup_v2.internal.id}"]
+  security_groups     = ["${openstack_networking_secgroup_v2.internal.name}"]
   network {
     port = "${openstack_networking_port_v2.port[count.index].id}"
   }

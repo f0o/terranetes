@@ -16,7 +16,7 @@ data:
     clusters:
     - cluster:
         certificate-authority: /run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://${api}:6443
+        server: https://${network.api}:6443
       name: k8s
     contexts:
     - context:
@@ -32,9 +32,9 @@ data:
         client-certificate: /etc/kubernetes/kube-proxy.crt
         client-key: /etc/kubernetes/kube-proxy.key
   kube-proxy.crt: |
-    ${indent(4,"${components.proxy[0]}")}
+    ${cert}
   kube-proxy.key: |
-    ${indent(4,"${components.proxy[1]}")}
+    ${key}
 ---
 apiVersion: apps/v1
 kind: DaemonSet
