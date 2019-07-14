@@ -67,9 +67,29 @@ resource "openstack_networking_secgroup_rule_v2" "internal" {
   remote_group_id   = "${openstack_networking_secgroup_v2.internal.id}"
 }
 
+resource "openstack_networking_secgroup_rule_v2" "sshd" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 22
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.internal.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "k8s" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 6443
+  port_range_max    = 6443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.internal.id}"
+}
+
 resource "openstack_compute_instance_v2" "node" {
   count               = "${length(local.k8s.nodes)}"
-  name                = "k8s-${count.index}"
+  name                = "${lookup(local.k8s.nodes[count.index], "name")}"
   image_name          = "${lookup(local.k8s.nodes[count.index], "image")}"
   flavor_name         = "${lookup(local.k8s.nodes[count.index], "type")}"
   user_data           = "${local.ignition[count.index].rendered}"

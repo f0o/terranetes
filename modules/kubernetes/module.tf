@@ -459,19 +459,20 @@ data "ignition_config" "ignition" {
   count = "${length(local.k8s.nodes)}"
   files = "${compact(concat(
     contains(local.k8s.nodes[count.index].labels, "master") ? concat(list( //Node is Master
-      local.k8s.etcd.type == "pod" ? module.etcd.files[count.index][0] : "",
-      local.k8s.etcd.type == "pod" ? module.etcd.files[count.index][1] : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.api-cert.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.api-key.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.controller-cert.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.controller-key.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.sa-cert.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.sa-key.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.scheduler-cert.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.scheduler-key.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.deployer-cert.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.deployer-key.0.id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.ca-key.0.id : "",
+      local.k8s.etcd.type == "pod" ? module.etcd.manifests[element([for k, v in local.masters : k if v.ip == local.k8s.nodes[count.index].ip], 0)] : "",
+      local.k8s.etcd.type == "pod" ? module.etcd.files[element([for k, v in local.masters : k if v.ip == local.k8s.nodes[count.index].ip], 0)][0] : "",
+      local.k8s.etcd.type == "pod" ? module.etcd.files[element([for k, v in local.masters : k if v.ip == local.k8s.nodes[count.index].ip], 0)][1] : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.api-cert[element([for k, v in local.masters : k if v.ip == local.k8s.nodes[count.index].ip], 0)].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.api-key[element([for k, v in local.masters : k if v.ip == local.k8s.nodes[count.index].ip], 0)].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.controller-cert[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.controller-key[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.sa-cert[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.sa-key[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.scheduler-cert[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.scheduler-key[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.deployer-cert[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.deployer-key[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.ca-key[0].id : "",
       data.ignition_file.kube-apiserver.id,
       data.ignition_file.kube-controller-manager.id,
       data.ignition_file.kube-scheduler.id,
@@ -486,7 +487,7 @@ data "ignition_config" "ignition" {
       data.ignition_file.uo-13.id,
       data.ignition_file.uo-14.id,
       ),
-      module.sc.manifests, module.etcd.manifests
+      module.sc.manifests
       ) : contains(local.k8s.nodes[count.index].labels, "compute") ? list( //Node is Compute
       ""
       ) : list( //Node is anything else

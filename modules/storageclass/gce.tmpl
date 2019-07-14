@@ -1,0 +1,9 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: ${ name != "" ? name : type }
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: ${params.type}
+  zone: ${params.zone}
+  fsType: "${lookup(params, "fsType", "ext4")}"

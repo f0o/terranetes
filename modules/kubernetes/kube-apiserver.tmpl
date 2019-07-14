@@ -16,7 +16,6 @@ spec:
     - kube-apiserver
     - --advertise-address=$${HOST_IP}
     - --allow-privileged=true
-    - --apiserver-count=${length(masters)}
     - --audit-log-maxage=30
     - --audit-log-maxbackup=3
     - --audit-log-maxsize=100
@@ -28,7 +27,7 @@ spec:
     - --etcd-cafile=/etc/ssl/ca.crt
     - --etcd-certfile=/etc/ssl/k8s/api/api.crt
     - --etcd-keyfile=/etc/ssl/k8s/api/api.key
-    - --etcd-servers=${etcd.type == "pod" ? "${join(",",[for v in masters : "https://${v.ip}:2379"])}" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"}
+    - --etcd-servers=${etcd.type == "pod" ? "https://$${HOST_IP}:2379" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"}
     - --event-ttl=1h
     - --kubelet-certificate-authority=/etc/ssl/ca.crt
     - --kubelet-client-certificate=/etc/ssl/k8s/api/api.crt

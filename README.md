@@ -17,7 +17,7 @@ variable "k8s" {
     storages = [                            # List of Storage Providers, Only GlusterFS and EBS supported for the PoC
       {
         name = "ebs-io1"                    # Name of the Storage Class
-        type = "ebs"                        # Type of the Storage Class (`glusterfs` or `ebs`)
+        type = "aws"                        # Type of the Storage Class (`glusterfs` or `ebs`)
         params = {                          # Paramters for the Storage Class, content varies
           fsType    = "ext4"
           type      = "io1"

@@ -17,15 +17,17 @@
 */
 
 data "ignition_file" "etcd-pod" {
-  count      = "${local.k8s.etcd.type == "pod" ? 1 : 0}"
+  count      = "${local.k8s.etcd.type == "pod" ? length(local.masters) : 0}"
   filesystem = "root"
   path       = "/opt/templates/manifests/01-etcd.yaml"
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("masters", local.masters), local.k8s.etcd))}"
+    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("cluster", join(",", [for k, v in local.masters : "etcd-${v.name}=https://${v.ip}:2380" if k <= count.index]), "token", random_uuid.cluster-token.result, "state", "${count.index == 0 ? "new" : "existing"}"), local.k8s.etcd))}"
   }
 }
+
+resource "random_uuid" "cluster-token" {}
 
 data "ignition_file" "etcd-cert" {
   count      = "${local.count}"

@@ -15,8 +15,9 @@ spec:
     - etcd
     - --name=etcd-$${HOSTNAME_CLOUD}
     - --data-dir=/var/lib/etcd
-    - --listen-peer-urls=https://0.0.0.0:2380
-    - --listen-client-urls=https://0.0.0.0:2379
+    - --listen-peer-urls=https://$${HOST_IP}:2380
+    - --listen-client-urls=https://$${HOST_IP}:2379
+    - --listen-metrics-urls=http://127.0.0.1:2378
     - --initial-advertise-peer-urls=https://$${HOST_IP}:2380
     - --advertise-client-urls=https://$${HOST_IP}:2379
     - --cert-file=/etc/etcd/etcd.crt
@@ -27,9 +28,14 @@ spec:
     - --peer-trusted-ca-file=/etc/etcd/ca.crt
     - --client-cert-auth=true
     - --peer-client-cert-auth=true
-    - ${discovery == "static" ? "--initial-cluster=${join(",",[for k,v in masters : "etcd-k8s-${k}=https://${v.ip}:2380"])}" : "--discovery=${discovery}"}
+    - ${discovery == "static" ? "--initial-cluster=${cluster}\n    - --initial-cluster-token=${token}\n    - --initial-cluster-state=${state}" : "--discovery=${discovery}"}
     image: ${image}
     livenessProbe:
+      tcpSocket:
+        host: 127.0.0.1
+        port: 2378
+      timeoutSeconds: 15
+    readinessProbe:
       exec:
         command:
         - etcdctl
@@ -42,7 +48,7 @@ spec:
         - --endpoints
         - https://$${HOST_IP}:2379
         - cluster-health
-      initialDelaySeconds: 45
+      timeoutSeconds: 30
     name: etcd
     securityContext:
       privileged: true
