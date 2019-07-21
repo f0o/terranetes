@@ -64,7 +64,7 @@ variable "k8s" {
 locals {
   defaults = {
     version       = "v${var.k8s.version}"
-    version_short = "v${join("", slice(split(".", var.k8s.version), 0, 1))}"
+    version_short = "v${join(".", slice(split(".", var.k8s.version), 0, 2))}"
     image         = "${var.k8s.image != "" ? var.k8s.image : "docker://gcr.io/google-containers/hyperkube"}"
     network       = "${merge(var.k8s.network, module.network.network)}"
     nodes         = "${module.network.nodes}"

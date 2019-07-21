@@ -101,13 +101,13 @@ resource "openstack_compute_instance_v2" "node" {
 }
 
 resource "openstack_networking_floatingip_v2" "fip" {
-  count = "${local.k8s.network.fip ? length(local.k8s.nodes) : 0}"
+  count = "${local.k8s.network.fip ? length(local.masters) : 0}"
   pool  = "${local.k8s.network.pool}"
 }
 
 resource "openstack_compute_floatingip_associate_v2" "fip" {
-  count       = "${local.k8s.network.fip ? length(local.k8s.nodes) : 0}"
+  count       = "${local.k8s.network.fip ? length(local.masters) : 0}"
   floating_ip = "${openstack_networking_floatingip_v2.fip[count.index].address}"
-  instance_id = "${openstack_compute_instance_v2.node[count.index].id}"
-  fixed_ip    = "${openstack_compute_instance_v2.node[count.index].network.0.fixed_ip_v4}"
+  instance_id = "${openstack_compute_instance_v2.node[element([for k, v in local.k8s.nodes : k if v.ip == local.masters[count.index].ip], 0)].id}"
+  fixed_ip    = "${openstack_compute_instance_v2.node[element([for k, v in local.k8s.nodes : k if v.ip == local.masters[count.index].ip], 0)].network.0.fixed_ip_v4}"
 }
