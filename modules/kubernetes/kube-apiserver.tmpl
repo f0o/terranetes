@@ -27,7 +27,7 @@ spec:
     - --etcd-cafile=/etc/ssl/ca.crt
     - --etcd-certfile=/etc/ssl/k8s/api/api.crt
     - --etcd-keyfile=/etc/ssl/k8s/api/api.key
-    - --etcd-servers=${etcd.type == "pod" ? "https://$${HOST_IP}:2379" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"}
+    - --etcd-servers=${loadbalancer.enable ? "https://${network.lb}:2379" : etcd.type == "pod" ? "https://$${HOST_IP}:2379" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"}
     - --event-ttl=1h
     - --kubelet-certificate-authority=/etc/ssl/ca.crt
     - --kubelet-client-certificate=/etc/ssl/k8s/api/api.crt

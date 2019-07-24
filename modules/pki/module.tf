@@ -58,11 +58,11 @@ resource "tls_cert_request" "etcd" {
   count           = "${var.k8s.pki.type == "local" ? local.counts.etcd : 0}"
   key_algorithm   = "ECDSA"
   private_key_pem = "${tls_private_key.etcd.*.private_key_pem[count.index]}"
-  ip_addresses    = ["${var.k8s.etcd.type == "pod" ? "${local.masters[count.index].ip}" : ""}"]
-  dns_names       = ["etcd-k8s-${count.index}"]
+  ip_addresses    = ["${var.k8s.etcd.type == "pod" ? "${local.masters[count.index].ip}" : ""}", "${var.k8s.loadbalancer.enable ? var.k8s.network.lb : ""}"]
+  dns_names       = ["etcd-${count.index}"]
 
   subject {
-    common_name  = "etcd-k8s-${count.index}"
+    common_name  = "etcd-${count.index}"
     organization = "ETCd"
   }
 }
@@ -96,7 +96,7 @@ resource "tls_cert_request" "k8s" {
   key_algorithm   = "ECDSA"
   private_key_pem = "${tls_private_key.k8s.*.private_key_pem[count.index]}"
   ip_addresses    = ["${var.k8s.nodes[count.index].ip}"]
-  dns_names       = ["k8s-${count.index}"]
+  dns_names       = ["${var.k8s.nodes[count.index].name}"]
 
   subject {
     common_name  = "system:node:${var.k8s.nodes[count.index].ip}"
@@ -196,7 +196,7 @@ resource "tls_cert_request" "api" {
   count           = "${var.k8s.pki.type == "local" ? local.counts.masters : 0}"
   key_algorithm   = "ECDSA"
   private_key_pem = "${tls_private_key.api[count.index].private_key_pem}"
-  ip_addresses    = ["${local.masters[count.index].ip}", "10.0.0.1", "127.0.0.1"]
+  ip_addresses    = ["${local.masters[count.index].ip}", "10.0.0.1", "127.0.0.1", "${var.k8s.loadbalancer.enable ? var.k8s.network.lb : ""}"]
   dns_names       = ["kubernetes", "kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local"]
 
   subject {

@@ -138,7 +138,7 @@ ConditionFirstBoot=True
 EnvironmentFile=/etc/environment
 RemainAfterExit=True
 ExecStartPre=/bin/sh -c "echo HOSTNAME_BIOS=$(hostname) | tee /etc/environment"
-ExecStartPre=/bin/sh -c "echo HOSTNAME_CLOUD=k8s-${count.index} | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo HOSTNAME_CLOUD=${local.k8s.nodes[count.index].name} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo HOST_IP=$(ip a | grep en | tail -n 1 | cut -d / -f 1 | rev |  cut -d \  -f 1 | rev) | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo HOSTNAME=$${HOST_IP} | tee -a /etc/environment"
 ExecStartPre=/usr/bin/hostnamectl set-hostname $${HOST_IP}
@@ -146,7 +146,7 @@ ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.version} | tee -a /
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=${local.k8s.version} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=${local.k8s.image} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_LABELS=${join(",", local.k8s.nodes[count.index].labels)} | tee -a /etc/environment"
-ExecStartPre=/bin/sh -c "echo KUBELET_LABELS_ARGS=--node-labels=\\\"${join(",", [for i in local.k8s.nodes[count.index].labels : "kubernetes.io/role=${i}"])}\\\" | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBELET_LABELS_ARGS=--node-labels=\\\"${join(",", [for i in local.k8s.nodes[count.index].labels : "node-role.kubernetes.io/${i}=true"])}\\\" | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo $${HOST_IP} $${HOSTNAME} ${join(" ", [for i in local.k8s.nodes[count.index].labels : join(" ", lookup(module.etcd.inject.alias, i, []))])} | tee -a /etc/hosts"
 ExecStartPre=/bin/sh -c "for i in ${module.cni.inject.hosts} ${module.etcd.inject.hosts} ${module.pki.inject.hosts} ${module.sc.inject.hosts}; do echo $i; done | tee -a /etc/hosts"
 ExecStart=/bin/echo started
@@ -331,7 +331,7 @@ data "ignition_file" "kubelet-conf" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:node:k8s-${count.index}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:node-${local.k8s.nodes[count.index].name}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key"))}"
   }
 }
 

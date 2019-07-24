@@ -21,12 +21,13 @@ variable "k8s" {
 }
 
 locals {
-  nodes = [for k, v in var.k8s.nodes : merge(v, map("ip", "${cidrhost(var.k8s.network.cidr, k + var.k8s.network.base + 1)}", "name", "k8s-${k}"))]
+  nodes = [for k, v in var.k8s.nodes : merge(v, map("ip", "${cidrhost(var.k8s.network.cidr, k + var.k8s.network.base + 1)}", "name", "terranetes-${k}"))]
   defaults = {
     dns  = "8.8.8.8"
     dhcp = true
     base = "${var.k8s.network.base != "" ? var.k8s.network.base : 50}"
-    api  = "${element([for v in local.nodes : v.ip if contains(v.labels, "master")], 0)}"
+    lb   = "${var.k8s.loadbalancer.enable ? cidrhost(var.k8s.network.cidr, var.k8s.network.base) : ""}"
+    api  = "${var.k8s.loadbalancer.enable ? cidrhost(var.k8s.network.cidr, var.k8s.network.base) : element([for v in local.nodes : v.ip if contains(v.labels, "master")], 0)}"
   }
   network = "${merge(local.defaults, var.k8s.network)}"
 }

@@ -55,8 +55,12 @@ variable "k8s" {
       dhcp     = true                       # Toggle for DHCP settings on network
       dns      = ["8.8.8.8"]                # List of DNS Servers
       upstream = "abcd123"                  # Network UUID/Parameter used for providers (UUID of external network for OpenStack)
-      fip      = true                       # Toggle to create Floating IPs (or equivalent)
+      fip      = true                       # Toggle to create Floating IPs (or equivalent) and attach them to the Masters or the Loadbalancer
       pool     = "FloatingPool"             # Pool to assign Floating IPs from
+    }
+    loadbalancer = {
+      enable = true                         # Boolean to enable or disable Loadbalancer deployment
+      type   = "lbaas"                      # Currently only 'lbaas' supported, later 'vm' and 'external' is also supported
     }
   }
 }
@@ -64,7 +68,7 @@ variable "k8s" {
 
 ## Example Terraform
 
-This can be used with above object to create a 2 node cluster based on the OpenStack Provider
+This can be used with above object to create a 2 node cluster based on the OpenStack Provider (LBaaSv2 required, flip `loadbalancer.enable` to `false` if unavailable)
 
 ```
 module "openstack" {

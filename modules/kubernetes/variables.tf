@@ -58,6 +58,11 @@ variable "k8s" {
     pki = object({
       type = string
     })
+    loadbalancer = object({
+      enable = bool
+      type   = string
+      specs  = object({})
+    })
   })
 }
 
