@@ -13,18 +13,7 @@ metadata:
 spec:
   containers:
   - command:
-    - kube-controller-manager
-    - --address=127.0.0.1
-    - --allocate-node-cidrs=true
-    - --cluster-cidr=10.244.0.0/16
-    - --cluster-signing-cert-file=/etc/ssl/ca.crt
-    - --cluster-signing-key-file=/etc/ssl/ca.key
-    - --root-ca-file=/etc/ssl/ca.crt
-    - --service-account-private-key-file=/etc/ssl/k8s/sa/sa.key
-    - --leader-elect=true
-    - --use-service-account-credentials=true
-    - --controllers=*,bootstrapsigner,tokencleaner
-    - --kubeconfig=/etc/kubernetes/kube-controller-manager.conf
+    - kube-controller-manager --address=127.0.0.1 --allocate-node-cidrs=true --cluster-cidr=10.244.0.0/16 --cluster-signing-cert-file=/etc/ssl/ca.crt --cluster-signing-key-file=/etc/ssl/ca.key --root-ca-file=/etc/ssl/ca.crt --service-account-private-key-file=/etc/ssl/k8s/sa/sa.key --leader-elect=true --use-service-account-credentials=true --controllers=*,bootstrapsigner,tokencleaner --kubeconfig=/etc/kubernetes/kube-controller-manager.conf
     image: gcr.io/google_containers/kube-controller-manager-amd64:$${KUBERNETES_VERSION}
     livenessProbe:
       failureThreshold: 8

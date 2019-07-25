@@ -13,30 +13,7 @@ metadata:
 spec:
   containers:
   - command:
-    - kube-apiserver
-    - --advertise-address=$${HOST_IP}
-    - --allow-privileged=true
-    - --audit-log-maxage=30
-    - --audit-log-maxbackup=3
-    - --audit-log-maxsize=100
-    - --audit-log-path=/dev/stdout
-    - --authorization-mode=Node,RBAC
-    - --bind-address=0.0.0.0
-    - --client-ca-file=/etc/ssl/ca.crt
-    - --enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
-    - --etcd-cafile=/etc/ssl/ca.crt
-    - --etcd-certfile=/etc/ssl/k8s/api/api.crt
-    - --etcd-keyfile=/etc/ssl/k8s/api/api.key
-    - --etcd-servers=${loadbalancer.enable ? "https://${network.lb}:2379" : etcd.type == "pod" ? "https://$${HOST_IP}:2379" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"}
-    - --event-ttl=1h
-    - --kubelet-certificate-authority=/etc/ssl/ca.crt
-    - --kubelet-client-certificate=/etc/ssl/k8s/api/api.crt
-    - --kubelet-client-key=/etc/ssl/k8s/api/api.key
-    - --kubelet-https=true
-    - --service-account-key-file=/etc/ssl/k8s/sa/sa.key
-    - --service-node-port-range=30000-35000
-    - --tls-cert-file=/etc/ssl/k8s/api/api.crt
-    - --tls-private-key-file=/etc/ssl/k8s/api/api.key
+    - kube-apiserver --advertise-address=$${HOST_IP} --allow-privileged=true --audit-log-maxage=30 --audit-log-maxbackup=3 --audit-log-maxsize=100 --audit-log-path=/dev/stdout --authorization-mode=Node,RBAC --bind-address=0.0.0.0 --client-ca-file=/etc/ssl/ca.crt --enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota --etcd-cafile=/etc/ssl/ca.crt --etcd-certfile=/etc/ssl/k8s/api/api.crt --etcd-keyfile=/etc/ssl/k8s/api/api.key --etcd-servers=${loadbalancer.enable ? "https://${network.lb}:2379" : etcd.type == "pod" ? "https://$${HOST_IP}:2379" : "${join(",",[for v in etcd.nodes : "https://${v.ip}:2379"])}"} --event-ttl=1h --kubelet-certificate-authority=/etc/ssl/ca.crt --kubelet-client-certificate=/etc/ssl/k8s/api/api.crt --kubelet-client-key=/etc/ssl/k8s/api/api.key --kubelet-https=true --service-account-key-file=/etc/ssl/k8s/sa/sa.key --service-node-port-range=30000-35000 --tls-cert-file=/etc/ssl/k8s/api/api.crt --tls-private-key-file=/etc/ssl/k8s/api/api.key
     image: gcr.io/google_containers/kube-apiserver-amd64:$${KUBERNETES_VERSION}
     name: kube-apiserver
     livenessProbe:
