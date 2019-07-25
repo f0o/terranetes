@@ -80,7 +80,7 @@ ConditionPathExists=/opt/tmp/deployer.conf
 SyslogIdentifier=k8s_deployer
 RemainAfterExit=True
 EnvironmentFile=/etc/environment
-ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/manifests ]; then exit 0; fi; for i in /opt/templates/manifests/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/manifests/$(basename $i); done'
+ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/manifests ]; then exit 0; fi; for i in /opt/templates/manifests/*.yaml; do echo "Parsing $i"; envsubst < $i | sed "s/%/$/g" > /opt/manifests/$(basename $i); done'
 ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/post-deploy ]; then exit 0; fi; for i in /opt/templates/post-deploy/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/post-deploy/$(basename $i); done'
 ExecStart=/bin/sh -c 'if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://${local.k8s.network.api}:6443/healthz)" != "ok" ]; do sleep 10; done; sleep 30; for i in /opt/post-deploy/*.yaml; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi'
 Restart=on-failure

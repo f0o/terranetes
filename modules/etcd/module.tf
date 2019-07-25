@@ -23,7 +23,7 @@ data "ignition_file" "etcd-pod" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("cluster", join(",", [for k, v in local.masters : "etcd-${v.name}=https://${v.ip}:2380" if k <= count.index]), "token", random_uuid.cluster-token.result, "state", "${count.index == 0 ? "new" : "existing"}"), local.k8s.etcd))}"
+    content = "${templatefile("${path.module}/etcd.tmpl", merge(map("cluster", join(",", [for k, v in local.masters : "etcd-${v.name}=https://${v.ip}:2380" if k <= count.index]), "token", random_uuid.cluster-token.result, "state", "${count.index == 0 ? "new" : "existing"}"), local.k8s))}"
   }
 }
 

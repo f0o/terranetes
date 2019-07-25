@@ -11,25 +11,10 @@ metadata:
   namespace: kube-system
 spec:
   containers:
-  - command:
-    - etcd
-    - --name=etcd-$${HOSTNAME_CLOUD}
-    - --data-dir=/var/lib/etcd
-    - --listen-peer-urls=https://$${HOST_IP}:2380
-    - --listen-client-urls=https://$${HOST_IP}:2379
-    - --listen-metrics-urls=http://127.0.0.1:2378
-    - --initial-advertise-peer-urls=https://$${HOST_IP}:2380
-    - --advertise-client-urls=https://$${HOST_IP}:2379
-    - --cert-file=/etc/etcd/etcd.crt
-    - --key-file=/etc/etcd/etcd.key
-    - --trusted-ca-file=/etc/etcd/ca.crt
-    - --peer-cert-file=/etc/etcd/etcd.crt
-    - --peer-key-file=/etc/etcd/etcd.key
-    - --peer-trusted-ca-file=/etc/etcd/ca.crt
-    - --client-cert-auth=true
-    - --peer-client-cert-auth=true
-    - ${discovery == "static" ? "--initial-cluster=${cluster}\n    - --initial-cluster-token=${token}\n    - --initial-cluster-state=${state}" : "--discovery=${discovery}"}
-    image: ${image}
+  - command: [ "/bin/sh", "-c" ]
+    args:
+    - ${state == "existing" ? "etcdctl --ca-file /etc/etcd/ca.crt --cert-file /etc/etcd/etcd.crt --key-file /etc/etcd/etcd.key --endpoints https://${network.api}:2379 member add etcd-$${HOSTNAME_CLOUD} https://$${HOST_IP}:2380;" : ""} etcd --name=etcd-$${HOSTNAME_CLOUD} --data-dir=/var/lib/etcd --listen-peer-urls=https://$${HOST_IP}:2380 --listen-client-urls=https://$${HOST_IP}:2379 --listen-metrics-urls=http://127.0.0.1:2378 --initial-advertise-peer-urls=https://$${HOST_IP}:2380 --advertise-client-urls=https://$${HOST_IP}:2379 --cert-file=/etc/etcd/etcd.crt --key-file=/etc/etcd/etcd.key --trusted-ca-file=/etc/etcd/ca.crt --peer-cert-file=/etc/etcd/etcd.crt --peer-key-file=/etc/etcd/etcd.key --peer-trusted-ca-file=/etc/etcd/ca.crt --client-cert-auth=true --peer-client-cert-auth=true ${etcd.discovery == "static" ? "--initial-cluster=${cluster} --initial-cluster-token=${token} --initial-cluster-state=${state}" : "--discovery=${etcd.discovery}"}
+    image: ${etcd.image}
     livenessProbe:
       tcpSocket:
         host: 127.0.0.1
@@ -59,9 +44,6 @@ spec:
     - mountPath: /etc/ssl/
       name: ssl
       readOnly: true
-    - mountPath: /usr/share/ca-certificates/
-      name: usr-ssl
-      readOnly: true
     - mountPath: /var/lib/etcd/
       name: data
     workingDir: /var/lib/etcd
@@ -75,9 +57,6 @@ spec:
   - hostPath:
       path: /etc/ssl/
     name: ssl
-  - hostPath:
-      path: /usr/share/ca-certificates/
-    name: usr-ssl
   - hostPath:
       path: /var/lib/etcd
     name: data
