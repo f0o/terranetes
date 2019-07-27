@@ -80,9 +80,7 @@ ConditionPathExists=/opt/tmp/deployer.conf
 SyslogIdentifier=k8s_deployer
 RemainAfterExit=True
 EnvironmentFile=/etc/environment
-ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/manifests ]; then exit 0; fi; for i in /opt/templates/manifests/*.yaml; do echo "Parsing $i"; envsubst < $i | sed "s/%/$/g" > /opt/manifests/$(basename $i); done'
-ExecStartPre=/bin/sh -c 'if [ ! -d /opt/templates/post-deploy ]; then exit 0; fi; for i in /opt/templates/post-deploy/*.yaml; do echo "Parsing $i"; envsubst < $i > /opt/post-deploy/$(basename $i); done'
-ExecStart=/bin/sh -c 'if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://${local.k8s.network.api}:6443/healthz)" != "ok" ]; do sleep 10; done; sleep 30; for i in /opt/post-deploy/*.yaml; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi'
+ExecStart=/bin/sh -c '( if [ ! -d /opt/templates/manifests ]; then exit 0; fi; for i in /opt/templates/manifests/*.*; do echo "Parsing $i"; envsubst < $i | sed "s/%/$/g" > /opt/manifests/$(basename $i); done ) && ( if [ ! -d /opt/templates/post-deploy ]; then exit 0; fi; for i in /opt/templates/post-deploy/*.*; do echo "Parsing $i"; envsubst < $i > /opt/post-deploy/$(basename $i); done ) && ( if [ ! -d /opt/post-deploy ] || [ ! -f /opt/tmp/deployer.conf ]; then exit 0; else while [ "$(curl -k https://${local.k8s.network.api}:6443/healthz)" != "ok" ]; do sleep 10; done; sleep 30; for i in /opt/post-deploy/*.*; do /opt/bin/kubectl --kubeconfig /opt/tmp/deployer.conf apply -f $i || exit 2; done && rm -r /opt/tmp; fi )'
 Restart=on-failure
 RestartSec=10
 TimeoutSec=0
@@ -357,7 +355,7 @@ data "ignition_file" "scheduler-conf" {
 
 data "ignition_file" "kube-apiserver" {
   filesystem = "root"
-  path       = "/opt/templates/manifests/02-kube-apiserver.yaml"
+  path       = "/opt/templates/manifests/02-kube-apiserver.json"
   mode       = 420
 
   content {
@@ -367,7 +365,7 @@ data "ignition_file" "kube-apiserver" {
 
 data "ignition_file" "kube-controller-manager" {
   filesystem = "root"
-  path       = "/opt/templates/manifests/03-kube-controller-manager.yaml"
+  path       = "/opt/templates/manifests/03-kube-controller-manager.json"
   mode       = 420
 
   content {
@@ -377,7 +375,7 @@ data "ignition_file" "kube-controller-manager" {
 
 data "ignition_file" "kube-scheduler" {
   filesystem = "root"
-  path       = "/opt/templates/manifests/04-kube-scheduler.yaml"
+  path       = "/opt/templates/manifests/04-kube-scheduler.json"
   mode       = 420
 
   content {
@@ -387,17 +385,17 @@ data "ignition_file" "kube-scheduler" {
 
 data "ignition_file" "kube-proxy" {
   filesystem = "root"
-  path       = "/opt/templates/post-deploy/01-kube-proxy.yaml"
+  path       = "/opt/templates/post-deploy/01-kube-proxy.json"
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kube-proxy.tmpl", merge(local.k8s, map("key", indent(4, "${local.pki.components.proxy[1]}"), "cert", indent(4, "${local.pki.components.proxy[0]}"))))}"
+    content = "${templatefile("${path.module}/kube-proxy.tmpl", merge(local.k8s, map("key", replace(local.pki.components.proxy[1], "\n", "\\n"), "cert", replace(local.pki.components.proxy[0], "\n", "\\n"))))}"
   }
 }
 
 data "ignition_file" "coredns" {
   filesystem = "root"
-  path       = "/opt/templates/post-deploy/05-coredns.yaml"
+  path       = "/opt/templates/post-deploy/05-coredns.json"
   mode       = 420
 
   content {
