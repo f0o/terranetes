@@ -62,6 +62,11 @@ variable "k8s" {
       enable = true                         # Boolean to enable or disable Loadbalancer deployment
       type   = "lbaas"                      # Currently only 'lbaas' supported, later 'vm' and 'external' is also supported
     }
+    ingress = {
+      enable = true                         # Boolean to enable or disable ingress (might change or be depending on ingress roles)
+      type   = "nginx-terranetes"           # Currently only 'nginx' and 'nginx-terranetes' supported, the latter is an adapted version of nginx ingress for role selction
+      specs  = {}                           # Future use maybe
+    }
   }
 }
 ```
