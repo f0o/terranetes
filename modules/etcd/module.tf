@@ -19,7 +19,7 @@
 data "ignition_file" "etcd-pod" {
   count      = "${local.k8s.etcd.type == "pod" ? length(local.masters) : 0}"
   filesystem = "root"
-  path       = "/opt/templates/manifests/01-etcd.yaml"
+  path       = "/opt/templates/manifests/01-etcd.json"
   mode       = 420
 
   content {

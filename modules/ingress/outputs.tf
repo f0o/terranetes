@@ -16,13 +16,13 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-variable "k8s" {
-  description = "Kubernetes Object - See Kubernetes Module for Documentation"
+/*
+  List of Manifests as `ignition_file.id` references
+*/
+output "manifests" {
+  value = "${data.ignition_file.ingress.*.id}"
 }
 
-locals {
-  k8s       = "${module.k8s.k8s}"
-  masters   = [for i in local.k8s.nodes : i if contains(i.labels, "master") == true]
-  ingresses = [for i in local.k8s.nodes : i if contains(i.labels, "ingress") == true]
-  ignition  = "${module.k8s.ignition}"
+output "inject" {
+  value = "${local.inject}"
 }

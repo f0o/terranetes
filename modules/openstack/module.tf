@@ -109,6 +109,33 @@ resource "openstack_networking_secgroup_rule_v2" "lbaas-etcd" {
   security_group_id = "${openstack_networking_secgroup_v2.internal.id}"
 }
 
+resource "openstack_networking_secgroup_v2" "ingress" {
+  count = "${local.k8s.ingress.enable == true ? 1 : 0}"
+  name  = "Terranetes (ingress)"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "http" {
+  count             = "${local.k8s.ingress.enable == true ? 1 : 0}"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.ingress.0.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "https" {
+  count             = "${local.k8s.ingress.enable == true ? 1 : 0}"
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 443
+  port_range_max    = 443
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.ingress.0.id}"
+}
+
 resource "openstack_compute_instance_v2" "node" {
   count               = "${length(local.k8s.nodes)}"
   name                = "${lookup(local.k8s.nodes[count.index], "name")}"
@@ -116,7 +143,7 @@ resource "openstack_compute_instance_v2" "node" {
   flavor_name         = "${lookup(local.k8s.nodes[count.index], "type")}"
   user_data           = "${local.ignition[count.index].rendered}"
   stop_before_destroy = true
-  security_groups     = ["${openstack_networking_secgroup_v2.internal.name}"]
+  security_groups     = compact(["${openstack_networking_secgroup_v2.internal.name}", "${contains(local.k8s.nodes[count.index].labels, "ingress") ? "${openstack_networking_secgroup_v2.ingress.0.name}" : ""}"])
   network {
     port = "${openstack_networking_port_v2.port[count.index].id}"
   }

@@ -42,6 +42,11 @@ module "sc" {
   k8s    = "${local.k8s}"
 }
 
+module "ingress" {
+  source = "../ingress"
+  k8s    = "${local.k8s}"
+}
+
 data "ignition_systemd_unit" "installer" {
   count   = "${length(local.k8s.nodes)}"
   name    = "k8s_installer.service"
@@ -485,9 +490,10 @@ data "ignition_config" "ignition" {
       data.ignition_file.uo-13.id,
       data.ignition_file.uo-14.id,
       ),
-      module.sc.manifests
-      ) : contains(local.k8s.nodes[count.index].labels, "compute") ? list( //Node is Compute
-      ""
+      module.sc.manifests, module.cni.manifests
+      ) : contains(local.k8s.nodes[count.index].labels, "ingress") ? concat(list( //Node is Ingress
+      ""),
+      module.ingress.manifests
       ) : list( //Node is anything else
       ""
     ),
@@ -496,7 +502,7 @@ data "ignition_config" "ignition" {
       local.k8s.pki.type == "local" ? data.ignition_file.kubelet-key[count.index].id : "",
       data.ignition_file.kubelet-conf[count.index].id,
     ),
-    data.ignition_file.ca-cert.*.id, module.cni.manifests
+    data.ignition_file.ca-cert.*.id
   ))}"
   users = ["${data.ignition_user.core.id}"]
   systemd = [

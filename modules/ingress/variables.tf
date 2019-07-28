@@ -21,8 +21,26 @@ variable "k8s" {
 }
 
 locals {
-  k8s       = "${module.k8s.k8s}"
-  masters   = [for i in local.k8s.nodes : i if contains(i.labels, "master") == true]
-  ingresses = [for i in local.k8s.nodes : i if contains(i.labels, "ingress") == true]
-  ignition  = "${module.k8s.ignition}"
+  ingress_types = {
+    nginx = {
+      urls = [
+        "https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml",
+        "https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/baremetal/service-nodeport.yaml"
+      ]
+    }
+    nginx-terranetes = {
+      urls = [
+        "https://raw.githubusercontent.com/f0o/terranetes/master/modules/ingress/nginx.yaml",
+      ]
+    }
+  }
+  inject = {
+    installer = ""
+    alias     = {}
+    hosts     = ""
+    kubelet = {
+      service = ""
+      rkt     = ""
+    }
+  }
 }

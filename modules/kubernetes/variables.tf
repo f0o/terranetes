@@ -63,6 +63,11 @@ variable "k8s" {
       type   = string
       specs  = object({})
     })
+    ingress = object({
+      enable = bool
+      type   = string
+      specs  = object({})
+    })
   })
 }
 

@@ -16,13 +16,13 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-variable "k8s" {
-  description = "Kubernetes Object - See Kubernetes Module for Documentation"
-}
+data "ignition_file" "ingress" {
+  count      = "${var.k8s.ingress.enable == true ? length(lookup(local.ingress_types, var.k8s.ingress.type)) : 0}"
+  filesystem = "root"
+  path       = "/opt/post-deploy/10-ingress-${count.index}.yaml"
+  mode       = 420
 
-locals {
-  k8s       = "${module.k8s.k8s}"
-  masters   = [for i in local.k8s.nodes : i if contains(i.labels, "master") == true]
-  ingresses = [for i in local.k8s.nodes : i if contains(i.labels, "ingress") == true]
-  ignition  = "${module.k8s.ignition}"
+  source {
+    source = "${element(lookup(lookup(local.ingress_types, var.k8s.ingress.type), "urls"), count.index)}"
+  }
 }
