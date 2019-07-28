@@ -36,14 +36,16 @@ variable "k8s" {
     }
     nodes = [                               # Arbitrary sized list of Nodes/VMs to generate configs for (later, to actually create the VMs)
       {
-        type   = "4x4x10:X"                 # The Flavor/Instance-Type to create VMs from (not used yet)
-        image  = "CoreOS 1632.3.0"          # The name of the Image / AMI / ... to boot (not used yet)
-        labels = ["master"]                 # Arbitrary list of node-roles, needs at least one master node
+        type    = "4x4x10:X"                # The Flavor/Instance-Type to create VMs from (not used yet)
+        image   = "CoreOS 1632.3.0"         # The name of the Image / AMI / ... to boot (not used yet)
+        labels  = ["master"]                # Arbitrary list of node-roles, needs at least one master node
+        version = ""                        # Version override - empty means take version from upper level
       },
       {
-        type   = "4x4x10:X"                 # The Flavor/Instance-Type to create VMs from (not used yet)
-        image  = "CoreOS 1632.3.0"          # The name of the Image / AMI / ... to boot (not used yet)
-        labels = ["compute"]                # Arbitrary list of node-roles, needs at least one master node
+        type    = "4x4x10:X"                # The Flavor/Instance-Type to create VMs from (not used yet)
+        image   = "CoreOS 1632.3.0"         # The name of the Image / AMI / ... to boot (not used yet)
+        labels  = ["compute"]               # Arbitrary list of node-roles, needs at least one master node
+        version = ""                        # Version override - empty means take version from upper level
       },
     ]
     pki = {

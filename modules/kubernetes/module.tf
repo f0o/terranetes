@@ -145,8 +145,8 @@ ExecStartPre=/bin/sh -c "echo HOSTNAME_CLOUD=${local.k8s.nodes[count.index].name
 ExecStartPre=/bin/sh -c "echo HOST_IP=$(ip a | grep en | tail -n 1 | cut -d / -f 1 | rev |  cut -d \  -f 1 | rev) | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo HOSTNAME=$${HOST_IP} | tee -a /etc/environment"
 ExecStartPre=/usr/bin/hostnamectl set-hostname $${HOST_IP}
-ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.version} | tee -a /etc/environment"
-ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=${local.k8s.version} | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBERNETES_VERSION=${local.k8s.nodes[count.index].version != "" ? local.k8s.nodes[count.index].version : local.k8s.version} | tee -a /etc/environment"
+ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_TAG=$${KUBERNETES_VERSION} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_IMAGE_URL=${local.k8s.image} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_LABELS=${join(",", local.k8s.nodes[count.index].labels)} | tee -a /etc/environment"
 ExecStartPre=/bin/sh -c "echo KUBELET_LABELS_ARGS=--node-labels=\\\"${join(",", [for i in local.k8s.nodes[count.index].labels : "node-role.kubernetes.io/${i}=true"])}\\\" | tee -a /etc/environment"
@@ -492,7 +492,10 @@ data "ignition_config" "ignition" {
       ),
       module.sc.manifests, module.cni.manifests
       ) : contains(local.k8s.nodes[count.index].labels, "ingress") ? concat(list( //Node is Ingress
-      ""),
+      local.k8s.pki.type == "local" ? data.ignition_file.deployer-cert[0].id : "",
+      local.k8s.pki.type == "local" ? data.ignition_file.deployer-key[0].id : "",
+      data.ignition_file.deployer-conf.id,
+      ),
       module.ingress.manifests
       ) : list( //Node is anything else
       ""

@@ -23,9 +23,10 @@ variable "k8s" {
     image   = string,
     pubkeys = list(string),
     nodes = list(object({
-      type   = string,
-      image  = string,
-      labels = list(string)
+      type    = string,
+      image   = string,
+      labels  = list(string),
+      version = string
     })),
     network = object({
       cidr     = string,
