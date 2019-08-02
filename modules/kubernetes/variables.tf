@@ -90,4 +90,29 @@ locals {
     compute = "${length(local.conmputes)}"
     ingress = "${length(local.ingresses)}"
   }
+  config_mapping = [
+    {
+      short = "v1.14"
+      key   = 0
+    },
+    {
+      short = "v1.15"
+      key   = 1
+    }
+  ]
+  configs = [
+    {
+      kubelet = {
+        KUBELET_KUBECONFIG_ARGS  = "--kubeconfig=/etc/kubernetes/kubelet.conf"
+        KUBELET_SYSTEM_PODS_ARGS = "--pod-manifest-path=/opt/manifests --allow-privileged=true"
+        KUBELET_NETWORK_ARGS     = "--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"
+        KUBELET_DNS_ARGS         = "--cluster-dns=10.0.0.2 --cluster-domain=cluster.local"
+        KUBELET_AUTHZ_ARGS       = "--authorization-mode=AlwaysAllow --client-ca-file=/etc/ssl/ca.crt"
+        KUBELET_CGROUP_ARGS      = "--cgroup-driver=cgroupfs"
+        KUBELET_CADVISOR_ARGS    = ""
+        KUBELET_CERTIFICATE_ARGS = "--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki --tls-cert-file=/etc/ssl/k8s/kubelet/kubelet.crt --tls-private-key-file=/etc/ssl/k8s/kubelet/kubelet.key"
+        KUBELET_EXTRA_ARGS       = "--feature-gates=PersistentLocalVolumes=true,VolumeScheduling=true"
+      }
+    }
+  ]
 }

@@ -95,6 +95,7 @@ UNIT
 }
 
 data "ignition_systemd_unit" "kubelet" {
+  count   = "${length(local.k8s.nodes)}"
   name    = "kubelet.service"
   enabled = true
 
@@ -108,18 +109,10 @@ StartLimitIntervalSec=0
 SyslogIdentifier=kubelet
 EnvironmentFile=/etc/environment
 Environment="RKT_GLOBAL_ARGS=--insecure-options=image"
-Environment="KUBELET_KUBECONFIG_ARGS=--kubeconfig=/etc/kubernetes/kubelet.conf"
-Environment="KUBELET_SYSTEM_PODS_ARGS=--pod-manifest-path=/opt/manifests --allow-privileged=true"
-Environment="KUBELET_NETWORK_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"
-Environment="KUBELET_DNS_ARGS=--cluster-dns=10.0.0.2 --cluster-domain=cluster.local"
-Environment="KUBELET_AUTHZ_ARGS=--authorization-mode=AlwaysAllow --client-ca-file=/etc/ssl/ca.crt"
-Environment="KUBELET_CGROUP_ARGS=--cgroup-driver=cgroupfs"
-Environment="KUBELET_CADVISOR_ARGS="
-Environment="KUBELET_CERTIFICATE_ARGS=--rotate-certificates=true --cert-dir=/var/lib/kubelet/pki --tls-cert-file=/etc/ssl/k8s/kubelet/kubelet.crt --tls-private-key-file=/etc/ssl/k8s/kubelet/kubelet.key"
-Environment="KUBELET_EXTRA_ARGS=--feature-gates=PersistentLocalVolumes=true,VolumeScheduling=true"
 Environment="RKT_RUN_ARGS=--volume local-volumes,kind=host,source=/local-volumes,readOnly=false,recursive=true --mount volume=local-volumes,target=/local-volumes --volume opt,kind=host,source=/opt,readOnly=false,recursive=true --mount volume=opt,target=/opt --volume ssl-kubelet,kind=host,source=/etc/ssl/k8s/kubelet,readOnly=false,recursive=true --mount volume=ssl-kubelet,target=/etc/ssl/k8s/kubelet --volume ca-kubelet,kind=host,source=/etc/ssl/ca.crt,readOnly=true --mount volume=ca-kubelet,target=/etc/ssl/ca.crt --volume cni,kind=host,source=/etc/cni,readOnly=false,recursive=true --mount volume=cni,target=/etc/cni --volume resolv-conf,kind=host,source=/etc/resolv.conf --mount volume=resolv-conf,target=/etc/resolv.conf ${module.cni.inject.kubelet.rkt}"
 ${module.cni.inject.kubelet.service}
-ExecStart=/usr/lib64/coreos/kubelet-wrapper $KUBELET_LABELS_ARGS $KUBELET_KUBECONFIG_ARGS $KUBELET_SYSTEM_PODS_ARGS $KUBELET_NETWORK_ARGS $KUBELET_DNS_ARGS $KUBELET_AUTHZ_ARGS $KUBELET_CGROUP_ARGS $KUBELET_CADVISOR_ARGS $KUBELET_CERTIFICATE_ARGS $KUBELET_EXTRA_ARGS
+ExecStart=/usr/lib64/coreos/kubelet-wrapper $KUBELET_LABELS_ARGS ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_KUBECONFIG_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_SYSTEM_PODS_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_NETWORK_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_DNS_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_AUTHZ_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_CGROUP_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_CADVISOR_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_CERTIFICATE_ARGS} ${local.configs[element([for v in local.config_mapping : v.key if v.short == local.k8s.version_short], 0)].kubelet.KUBELET_EXTRA_ARGS}
+${contains(local.k8s.nodes[count.index].labels, "master") || contains(local.k8s.nodes[count.index].labels, "ingress") ? "ExecStartPost=/usr/bin/echo /opt/bin/kubectl taint $${HOST_IP} ${join(" ", [for i in local.k8s.nodes[count.index].labels : i == "master" ? "node-role.kubernetes.io/${i}:NoSchedule" : i == "ingress" ? "node-role.kubernetes.io/${i}:PreferNoSchedule" : ""])}" : ""}
 Restart=always
 RestartSec=1
 [Install]
@@ -492,9 +485,9 @@ data "ignition_config" "ignition" {
       ),
       module.sc.manifests, module.cni.manifests
       ) : contains(local.k8s.nodes[count.index].labels, "ingress") ? concat(list( //Node is Ingress
-      local.k8s.pki.type == "local" ? data.ignition_file.deployer-cert[0].id : "",
-      local.k8s.pki.type == "local" ? data.ignition_file.deployer-key[0].id : "",
-      data.ignition_file.deployer-conf.id,
+        local.k8s.pki.type == "local" ? data.ignition_file.deployer-cert[0].id : "",
+        local.k8s.pki.type == "local" ? data.ignition_file.deployer-key[0].id : "",
+        data.ignition_file.deployer-conf.id,
       ),
       module.ingress.manifests
       ) : list( //Node is anything else
@@ -512,6 +505,6 @@ data "ignition_config" "ignition" {
     "${data.ignition_systemd_unit.set-environment[count.index].id}",
     "${data.ignition_systemd_unit.installer[count.index].id}",
     "${data.ignition_systemd_unit.deployer.id}",
-    "${data.ignition_systemd_unit.kubelet.id}",
+    "${data.ignition_systemd_unit.kubelet[count.index].id}",
   ]
 }

@@ -150,14 +150,14 @@ resource "openstack_compute_instance_v2" "node" {
 }
 
 resource "openstack_networking_floatingip_v2" "fip" {
-  count = "${local.k8s.network.fip ? local.k8s.loadbalancer.enable ? 1 : length(local.masters) : 0}"
+  count = "${local.k8s.network.fip ? local.k8s.loadbalancer.enable ? 1 : length(distinct([for k, v in local.k8s.nodes : k if contains(v.labels, "master") || (local.k8s.ingress.enable && contains(v.labels, "ingress"))])) : 0}"
   pool  = "${local.k8s.network.pool}"
 }
 
 resource "openstack_networking_floatingip_associate_v2" "fip" {
-  count       = "${local.k8s.network.fip ? local.k8s.loadbalancer.enable ? 1 : length(local.masters) : 0}"
+  count       = "${local.k8s.network.fip ? local.k8s.loadbalancer.enable ? 1 : length(distinct([for k, v in local.k8s.nodes : k if contains(v.labels, "master") || (local.k8s.ingress.enable && contains(v.labels, "ingress"))])) : 0}"
   floating_ip = "${openstack_networking_floatingip_v2.fip[count.index].address}"
-  port_id     = "${local.k8s.loadbalancer.enable ? local.k8s.loadbalancer.type == "lbaas" ? openstack_lb_loadbalancer_v2.terranetes.0.vip_port_id : "" : openstack_networking_port_v2.port[element([for k, v in local.k8s.nodes : k if v.ip == local.masters[count.index].ip], 0)].id}"
+  port_id     = "${local.k8s.loadbalancer.enable ? local.k8s.loadbalancer.type == "lbaas" ? openstack_lb_loadbalancer_v2.terranetes.0.vip_port_id : "" : openstack_networking_port_v2.port[element(distinct([for k, v in local.k8s.nodes : k if contains(v.labels, "master") || (local.k8s.ingress.enable && contains(v.labels, "ingress"))]), count.index)].id}"
 }
 
 resource "openstack_lb_loadbalancer_v2" "terranetes" {
@@ -183,6 +183,22 @@ resource "openstack_lb_listener_v2" "etcd" {
   protocol_port   = 2379
 }
 
+resource "openstack_lb_listener_v2" "http" {
+  name            = "http"
+  count           = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? 1 : 0}"
+  loadbalancer_id = "${openstack_lb_loadbalancer_v2.terranetes.0.id}"
+  protocol        = "TCP"
+  protocol_port   = 80
+}
+
+resource "openstack_lb_listener_v2" "https" {
+  name            = "https"
+  count           = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? 1 : 0}"
+  loadbalancer_id = "${openstack_lb_loadbalancer_v2.terranetes.0.id}"
+  protocol        = "TCP"
+  protocol_port   = 443
+}
+
 resource "openstack_lb_pool_v2" "kube-api" {
   name        = "kube-api"
   count       = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" ? 1 : 0}"
@@ -195,6 +211,22 @@ resource "openstack_lb_pool_v2" "etcd" {
   name        = "etcd"
   count       = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" ? 1 : 0}"
   listener_id = "${openstack_lb_listener_v2.etcd.0.id}"
+  protocol    = "TCP"
+  lb_method   = "ROUND_ROBIN"
+}
+
+resource "openstack_lb_pool_v2" "http" {
+  name        = "http"
+  count       = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? 1 : 0}"
+  listener_id = "${openstack_lb_listener_v2.http.0.id}"
+  protocol    = "TCP"
+  lb_method   = "ROUND_ROBIN"
+}
+
+resource "openstack_lb_pool_v2" "https" {
+  name        = "https"
+  count       = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? 1 : 0}"
+  listener_id = "${openstack_lb_listener_v2.https.0.id}"
   protocol    = "TCP"
   lb_method   = "ROUND_ROBIN"
 }
@@ -219,6 +251,26 @@ resource "openstack_lb_monitor_v2" "etcd" {
   max_retries = 3
 }
 
+resource "openstack_lb_monitor_v2" "http" {
+  name        = "http"
+  count       = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? 1 : 0}"
+  pool_id     = "${openstack_lb_pool_v2.http.0.id}"
+  type        = "TCP"
+  delay       = 5
+  timeout     = 3
+  max_retries = 3
+}
+
+resource "openstack_lb_monitor_v2" "https" {
+  name        = "https"
+  count       = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? 1 : 0}"
+  pool_id     = "${openstack_lb_pool_v2.https.0.id}"
+  type        = "TCP"
+  delay       = 5
+  timeout     = 3
+  max_retries = 3
+}
+
 resource "openstack_lb_member_v2" "kube-api" {
   name          = "kube-api"
   count         = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" ? length(local.masters) : 0}"
@@ -235,4 +287,22 @@ resource "openstack_lb_member_v2" "etcd" {
   subnet_id     = "${openstack_networking_subnet_v2.subnet.id}"
   address       = "${local.masters[count.index].ip}"
   protocol_port = 2379
+}
+
+resource "openstack_lb_member_v2" "http" {
+  name          = "http"
+  count         = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? length(local.ingresses) : 0}"
+  pool_id       = "${openstack_lb_pool_v2.http.0.id}"
+  subnet_id     = "${openstack_networking_subnet_v2.subnet.id}"
+  address       = "${local.ingresses[count.index].ip}"
+  protocol_port = 80
+}
+
+resource "openstack_lb_member_v2" "https" {
+  name          = "https"
+  count         = "${local.k8s.loadbalancer.enable && local.k8s.loadbalancer.type == "lbaas" && local.k8s.ingress.enable ? length(local.ingresses) : 0}"
+  pool_id       = "${openstack_lb_pool_v2.https.0.id}"
+  subnet_id     = "${openstack_networking_subnet_v2.subnet.id}"
+  address       = "${local.ingresses[count.index].ip}"
+  protocol_port = 443
 }
