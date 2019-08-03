@@ -78,7 +78,7 @@ locals {
     version_short = "v${join(".", slice(split(".", var.k8s.version), 0, 2))}"
     image         = "${var.k8s.image != "" ? var.k8s.image : "docker://gcr.io/google-containers/hyperkube"}"
     network       = "${merge(var.k8s.network, module.network.network)}"
-    nodes         = "${module.network.nodes}"
+    nodes         = [for k, v in module.network.nodes : merge(v, map("version", "v${var.k8s.nodes[k].version == "" ? var.k8s.version : var.k8s.nodes[k].version}", "version_short", "v${join(".", slice(split(".", var.k8s.nodes[k].version == "" ? var.k8s.version : var.k8s.nodes[k].version), 0, 2))}"))]
   }
   pki       = "${module.pki.pki}"
   k8s       = "${merge(var.k8s, local.defaults)}"
