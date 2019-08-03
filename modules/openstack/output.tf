@@ -22,3 +22,12 @@ output "k8s" {
 output "pki" {
   value = "${module.k8s.pki}"
 }
+
+output "admin" {
+  value = {
+    kubeconfig = "${templatefile("${path.module}/../kubernetes/kubeconfig.tmpl", map("api", "${local.k8s.loadbalancer.enable == true ? openstack_networking_floatingip_v2.fip[0].address : local.k8s.network.api}", "user", "admin", "crt", "admin.crt", "key", "admin.key", "ca", "ca.crt"))}"
+    cert       = "${module.k8s.pki.users.admin[0]}"
+    key        = "${module.k8s.pki.users.admin[1]}"
+    ca         = "${module.k8s.pki.ca.cert}"
+  }
+}

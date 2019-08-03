@@ -316,7 +316,7 @@ data "ignition_file" "deployer-conf" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "k8s-deployer", "crt", "/opt/tmp/deployer.crt", "key", "/opt/tmp/deployer.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "k8s-deployer", "crt", "/opt/tmp/deployer.crt", "key", "/opt/tmp/deployer.key", "ca","/etc/ssl/ca.crt"))}"
   }
 }
 
@@ -327,7 +327,7 @@ data "ignition_file" "kubelet-conf" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:node-${local.k8s.nodes[count.index].name}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:node-${local.k8s.nodes[count.index].name}", "crt", "/etc/ssl/k8s/kubelet/kubelet.crt", "key", "/etc/ssl/k8s/kubelet/kubelet.key", "ca","/etc/ssl/ca.crt"))}"
   }
 }
 
@@ -337,7 +337,7 @@ data "ignition_file" "controller-conf" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:kube-controller-manager", "crt", "/etc/ssl/k8s/controller/controller.crt", "key", "/etc/ssl/k8s/controller/controller.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:kube-controller-manager", "crt", "/etc/ssl/k8s/controller/controller.crt", "key", "/etc/ssl/k8s/controller/controller.key", "ca","/etc/ssl/ca.crt"))}"
   }
 }
 
@@ -347,7 +347,7 @@ data "ignition_file" "scheduler-conf" {
   mode       = 420
 
   content {
-    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:kube-scheduler", "crt", "/etc/ssl/k8s/scheduler/scheduler.crt", "key", "/etc/ssl/k8s/scheduler/scheduler.key"))}"
+    content = "${templatefile("${path.module}/kubeconfig.tmpl", map("api", "${local.k8s.network.api}", "user", "system:kube-scheduler", "crt", "/etc/ssl/k8s/scheduler/scheduler.crt", "key", "/etc/ssl/k8s/scheduler/scheduler.key", "ca","/etc/ssl/ca.crt"))}"
   }
 }
 
